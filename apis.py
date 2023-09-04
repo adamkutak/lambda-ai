@@ -1,5 +1,5 @@
 import openai
-from prompts import CREATE_ENDPOINT
+from prompts import CREATE_ENDPOINT, ON_CREATE_ERROR
 import json
 from dotenv import load_dotenv
 import os
@@ -7,10 +7,6 @@ from gpt_management import openai_chat_response
 import subprocess
 import requests
 import atexit
-
-# TODO:
-# 1. theres an Occasional bug with the port number, even though it claims to be hosted on port 8000
-# the requests library can't find it. However, I can access it at port 8000 on my browser
 
 API_FOLDER = "generated_apis"
 TEST_FOLDER = "generated_tests"
@@ -28,6 +24,8 @@ FAST_API_IMPORT = "from fastapi import FastAPI\n"
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8000"
+
+MAX_TEST_CHANCES = 4
 
 
 # make an API with fast API
@@ -49,19 +47,38 @@ def create_api(
         ),
         "model": "gpt-3.5-turbo",
     }
+
+    test_result = None
+    attempt_count = 0
     result_messages = openai_chat_response(**data)
 
-    try:
-        new_function = json.loads(result_messages[-1].content)
-        imports = new_function["imports"]
-        function = new_function["function"]
-    except Exception as e:
-        return f"error: {e}"
+    while test_result != "success" and attempt_count <= MAX_TEST_CHANCES:
+        try:
+            new_function = json.loads(result_messages[-1].content)
+            imports = new_function["imports"]
+            function = new_function["function"]
+        except Exception:
+            test_result = f"Error: either not valid JSON, or JSON is incorrectly formated. Only a valid JSON object with two elements (imports and function) is accepted."  # noqa
+        finally:
+            test_result = test_api(
+                imports,
+                function,
+                name,
+                path,
+                inputs,
+                outputs,
+                test_cases,
+            )
 
-    test_result = test_api(imports, function, name, path, inputs, outputs, test_cases)
-    breakpoint()
+        data = {
+            "prompt": ON_CREATE_ERROR.format(error=test_result),
+            "model": "gpt-3.5-turbo",
+            "existing_messages": result_messages,
+        }
+        result_messages = openai_chat_response(**data)
+        attempt_count += 1
+
     # add_api(imports, function)
-
     # server_pid = deploy_apis()
 
     return "success"
@@ -130,6 +147,7 @@ def test_api(
 
     test_file_uvicorn = TEST_FOLDER + "." + file_name.replace(".py", "")
 
+    # DEPLOY API
     try:
         server_process = subprocess.Popen(
             [
@@ -142,10 +160,21 @@ def test_api(
             ],
         )
         atexit.register(server_process.terminate)
+
+        # wait until its live before continuing
+        live = False
+        while not live:
+            try:
+                requests.get(
+                    f"http://{DEFAULT_HOST}:{DEFAULT_PORT}",
+                )
+                live = True
+            except Exception:
+                pass
     except Exception as e:
         return f"error starting api deployment: {e}"
 
-    # now run the test cases
+    # RUN TEST CASES
     for test_case in test_cases:
         try:
             response = requests.get(
@@ -157,7 +186,7 @@ def test_api(
 
         test_output = response.json()
         if test_output != test_case["output"]:
-            return f"error on test case: {str(test_case['input'])}, expected output is: {str(test_case['output'])}. Actual output is {str(test_output)}"
+            return f"error on test case: {str(test_case['input'])}, expected output is: {str(test_case['output'])}. Actual output is {str(test_output)}"  # noqa
 
     undeploy_apis(server_process.pid)
 
@@ -178,6 +207,17 @@ def deploy_apis():
         ],
     )
     atexit.register(server_process.terminate)
+
+    # wait until its live before returning
+    live = False
+    while not live:
+        try:
+            requests.get(
+                f"http://{DEFAULT_HOST}:{DEFAULT_PORT}",
+            )
+            live = True
+        except Exception:
+            pass
 
     return server_process.pid
 

@@ -15,3 +15,13 @@ the function outputs the following: {outputs}
 This is the description of the endpoint function:
 {functionality}
 """
+
+
+ON_CREATE_ERROR = """
+Error trying to test out the function you generated.
+Review the original instructions, and modify your output based on the error:
+{error}
+
+Do not return anything except the function. 
+Do not include any apology message or other useless text.
+"""
