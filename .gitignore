@@ -154,3 +154,5 @@ cython_debug/
 
 # my own stuff
 .vscode/
+/generated_tests
+/generated_apis

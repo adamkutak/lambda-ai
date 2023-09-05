@@ -1,5 +1,11 @@
 import openai
-from prompts import CREATE_ENDPOINT, ON_CREATE_ERROR
+from prompts import (
+    CREATE_ENDPOINT,
+    ON_CREATE_ERROR,
+    FUNCTION_CALLING_ENDPOINT_CREATION,
+    CREATE_ENDPOINT_WITH_FUNCTION_CALLING,
+    ON_CREATE_ERROR_WITH_FUNCTION_CALLING,
+)
 import json
 from dotenv import load_dotenv
 import os
@@ -7,6 +13,28 @@ from gpt_management import openai_chat_response
 import subprocess
 import requests
 import atexit
+import pprint
+
+# COMPLETE:
+# Check for valid python code: use black formatting, seems to work perfectly
+# JSON returning: seems to work fine 99%? Very occasional we get weird errors with "incorrect delimiter" or similar.
+# - seems like the error handling can fix it though.
+
+# TODO:
+# Create fastAPI function definition via templates. Don't generate it with AI.
+# test reliability, find more possible errors that can arise and patch them.
+# turn some repetitive code into callable functions and add more class structure
+# If we fail to create the function, the code should try again starting from scratch (new message history)
+# - We can even get gpt-4 to rewrite the prompt and then try again?
+
+# TODO (MAJOR STEPS):
+# automatically pip install the requirements.
+# Use Chain of thought reasoning for more complex functions. Break them down into smaller components
+# Build a tool that lets you upload external interface documentation with the necessary API keys.
+# - Generated functions can then incorporate these API's
+# Add support for making databases, to create stateful APIs.
+# More advanced testing: generate unit tests with AI?
+
 
 API_FOLDER = "generated_apis"
 TEST_FOLDER = "generated_tests"
@@ -38,50 +66,66 @@ def create_api(
     test_cases: list[dict],
 ) -> str:
     data = {
-        "prompt": CREATE_ENDPOINT.format(
+        "prompt": CREATE_ENDPOINT_WITH_FUNCTION_CALLING.format(
             name=name,
             path=path,
             inputs=str(inputs),
             outputs=str(outputs),
             functionality=functionality,
         ),
-        "model": "gpt-3.5-turbo",
+        "model": "gpt-3.5-turbo-0613",
+        "system_message": "Only use the functions you have been provided with.",  # noqa
+        "functions": [FUNCTION_CALLING_ENDPOINT_CREATION],
+        "function_call": "create_api",
     }
+    result_messages = openai_chat_response(**data)
 
     test_result = None
     attempt_count = 0
-    result_messages = openai_chat_response(**data)
-
     while test_result != "success" and attempt_count <= MAX_TEST_CHANCES:
-        try:
-            new_function = json.loads(result_messages[-1].content)
-            imports = new_function["imports"]
-            function = new_function["function"]
-        except Exception:
-            test_result = f"Error: either not valid JSON, or JSON is incorrectly formated. Only a valid JSON object with two elements (imports and function) is accepted."  # noqa
-        finally:
-            test_result = test_api(
-                imports,
-                function,
-                name,
-                path,
-                inputs,
-                outputs,
-                test_cases,
-            )
-
-        data = {
-            "prompt": ON_CREATE_ERROR.format(error=test_result),
-            "model": "gpt-3.5-turbo",
-            "existing_messages": result_messages,
-        }
-        result_messages = openai_chat_response(**data)
         attempt_count += 1
+        if (
+            result_messages[-1].get("function_call")
+            and result_messages[-1].function_call.name == "create_api"
+        ):
+            try:
+                new_function = json.loads(
+                    result_messages[-1].function_call.arguments,
+                    strict=False,
+                )
+                imports = new_function["imports"]
+                function = new_function["endpoint"]
+                # function = function.replace("def", "def def")  # TEST TOOL TO CAUSE INVALID PYTHON
+            except Exception as e:
+                test_result = f"Error decoding your JSON function call. Error: {e}, make sure you provide a valid JSON function call."  # noqa
+            else:
+                test_result = test_api(
+                    imports,
+                    function,
+                    name,
+                    path,
+                    test_cases,
+                )
+        else:
+            test_result = "Error, you did not use a valid function call. Use the create_api function to pass in and test the code you generated."  # noqa
+
+        print(result_messages[-1].function_call)
+        print(test_result)
+        if test_result != "success":
+            data = {
+                "prompt": ON_CREATE_ERROR_WITH_FUNCTION_CALLING.format(
+                    error=test_result
+                ),
+                "model": "gpt-3.5-turbo-0613",
+                "existing_messages": result_messages,
+                "functions": [FUNCTION_CALLING_ENDPOINT_CREATION],
+                "function_call": "create_api",
+            }
+            result_messages = openai_chat_response(**data)
 
     # add_api(imports, function)
     # server_pid = deploy_apis()
-
-    return "success"
+    return test_result
 
 
 # add the API to the existing set of APIs
@@ -123,8 +167,6 @@ def test_api(
     new_function: str,
     name: str,
     path: str,
-    inputs: dict,
-    outputs: dict,
     test_cases: list[dict],
 ):
     file_name = f"{name}.py"
@@ -143,9 +185,18 @@ def test_api(
     with open(test_file_location, "w") as test_file:
         test_file.write(testable_python_file_string)
 
-    subprocess.run(["black", test_file_location])  # black formatting
-
     test_file_uvicorn = TEST_FOLDER + "." + file_name.replace(".py", "")
+
+    # FORMAT API (SERVES TO CHECK FOR VALID PYTHON CODE AS WELL)
+    try:
+        subprocess.run(
+            ["black", test_file_location],
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as e:
+        black_subprocess_error = e.stderr.decode("utf-8")
+        return f"{black_subprocess_error}. Python is likely invalid."
 
     # DEPLOY API
     try:
@@ -182,10 +233,16 @@ def test_api(
                 params=test_case["input"],
             )
         except Exception as e:
+            undeploy_apis(server_process.pid)
             return f"error on test case: {str(test_case)}, error: {e}"
+
+        if response.status_code >= 400:
+            undeploy_apis(server_process.pid)
+            return f"error on test case: {str(test_case)}, error: {response.reason}"  # noqa
 
         test_output = response.json()
         if test_output != test_case["output"]:
+            undeploy_apis(server_process.pid)
             return f"error on test case: {str(test_case['input'])}, expected output is: {str(test_case['output'])}. Actual output is {str(test_output)}"  # noqa
 
     undeploy_apis(server_process.pid)
@@ -229,53 +286,56 @@ def undeploy_apis(pid: int):
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
-status = create_api(
-    "test_func2",
-    "/tests/set2/",
-    {
-        "item_id": int,
-        "status": bool,
-        "bought": int,
-    },
-    {
-        "item_id": int,
-        "quantity": int,
-    },
-    "quantity is 100. If status is true, deduct bought from quantity.",
-    test_cases=[
+
+repetition = 10
+for i in range(repetition):
+    status = create_api(
+        "test_func2",
+        "/tests/set2/",
         {
-            "input": {
-                "item_id": 9478,
-                "status": True,
-                "bought": 99,
-            },
-            "output": {
-                "item_id": 9478,
-                "quantity": 1,
-            },
+            "item_id": int,
+            "status": bool,
+            "bought": int,
         },
         {
-            "input": {
-                "item_id": 1234,
-                "status": False,
-                "bought": 99,
-            },
-            "output": {
-                "item_id": 1234,
-                "quantity": 100,
-            },
+            "item_id": int,
+            "quantity": int,
         },
-        {
-            "input": {
-                "item_id": 645609,
-                "status": True,
-                "bought": 105,
+        "quantity is 100. If status is true, deduct bought from quantity.",
+        test_cases=[
+            {
+                "input": {
+                    "item_id": 9478,
+                    "status": True,
+                    "bought": 99,
+                },
+                "output": {
+                    "item_id": 9478,
+                    "quantity": 1,
+                },
             },
-            "output": {
-                "item_id": 645609,
-                "quantity": -5,
+            {
+                "input": {
+                    "item_id": 1234,
+                    "status": False,
+                    "bought": 99,
+                },
+                "output": {
+                    "item_id": 1234,
+                    "quantity": 100,
+                },
             },
-        },
-    ],
-)
-print(status)
+            {
+                "input": {
+                    "item_id": 645609,
+                    "status": True,
+                    "bought": 105,
+                },
+                "output": {
+                    "item_id": 645609,
+                    "quantity": -5,
+                },
+            },
+        ],
+    )
+    print(status)
