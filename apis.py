@@ -3,8 +3,7 @@ from prompts import (
     CREATE_ENDPOINT,
     ON_CREATE_ERROR,
     FUNCTION_CALLING_ENDPOINT_CREATION,
-    CREATE_ENDPOINT_WITH_FUNCTION_CALLING,
-    ON_CREATE_ERROR_WITH_FUNCTION_CALLING,
+    CREATE_ENDPOINT_WITH_FUNCTION_DEFINITION,
 )
 import json
 from dotenv import load_dotenv
@@ -33,7 +32,6 @@ import pprint
 # Build a tool that lets you upload external interface documentation with the necessary API keys.
 # - Generated functions can then incorporate these API's
 # Add support for making databases, to create stateful APIs.
-# More advanced testing: generate unit tests with AI?
 
 
 API_FOLDER = "generated_apis"
@@ -48,7 +46,10 @@ app = FastAPI()
 # --xyz123--
 """
 
-FAST_API_IMPORT = "from fastapi import FastAPI\n"
+BASE_IMPORTS = """
+from fastapi import FastAPI
+from typing import Dict, Any
+"""
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8000"
@@ -64,15 +65,30 @@ def create_api(
     outputs: dict,
     functionality: str,
     test_cases: list[dict],
+    is_async: bool = False,
 ) -> str:
+    function_def = generate_fastapi_definition(
+        name,
+        path,
+        inputs,
+        outputs,
+        is_async,
+    )
+
     data = {
-        "prompt": CREATE_ENDPOINT_WITH_FUNCTION_CALLING.format(
-            name=name,
-            path=path,
+        "prompt": CREATE_ENDPOINT_WITH_FUNCTION_DEFINITION.format(
+            function_def=function_def,
             inputs=str(inputs),
             outputs=str(outputs),
             functionality=functionality,
         ),
+        # "prompt": CREATE_ENDPOINT.format(
+        #     name=name,
+        #     path=path,
+        #     inputs=str(inputs),
+        #     outputs=str(outputs),
+        #     functionality=functionality,
+        # ),
         "model": "gpt-3.5-turbo-0613",
         "system_message": "Only use the functions you have been provided with.",  # noqa
         "functions": [FUNCTION_CALLING_ENDPOINT_CREATION],
@@ -89,23 +105,30 @@ def create_api(
             and result_messages[-1].function_call.name == "create_api"
         ):
             try:
+                breakpoint()
                 new_function = json.loads(
                     result_messages[-1].function_call.arguments,
                     strict=False,
                 )
                 imports = new_function["imports"]
                 function = new_function["endpoint"]
-                # function = function.replace("def", "def def")  # TEST TOOL TO CAUSE INVALID PYTHON
+                # function = function.replace("def", "def def")  # TEST TOOL TO CAUSE INVALID PYTHON # noqa
             except Exception as e:
-                test_result = f"Error decoding your JSON function call. Error: {e}, make sure you provide a valid JSON function call."  # noqa
+                test_result = f"Error decoding your JSON function call. Error: {e}, make sure you provide a valid function call in JSON format."  # noqa
             else:
-                test_result = test_api(
-                    imports,
-                    function,
-                    name,
-                    path,
-                    test_cases,
-                )
+                if "def" in function or "@app" in function:
+                    test_result = "Error: function definition or FastAPI decorator detected. Do not include these in your code."
+                else:
+                    function = (
+                        function_def + "\t" + function.replace("\n", "\n\t")
+                    )  # noqa
+                    test_result = test_api(
+                        imports,
+                        function,
+                        name,
+                        path,
+                        test_cases,
+                    )
         else:
             test_result = "Error, you did not use a valid function call. Use the create_api function to pass in and test the code you generated."  # noqa
 
@@ -113,9 +136,7 @@ def create_api(
         print(test_result)
         if test_result != "success":
             data = {
-                "prompt": ON_CREATE_ERROR_WITH_FUNCTION_CALLING.format(
-                    error=test_result
-                ),
+                "prompt": ON_CREATE_ERROR.format(error=test_result),
                 "model": "gpt-3.5-turbo-0613",
                 "existing_messages": result_messages,
                 "functions": [FUNCTION_CALLING_ENDPOINT_CREATION],
@@ -126,6 +147,33 @@ def create_api(
     # add_api(imports, function)
     # server_pid = deploy_apis()
     return test_result
+
+
+def generate_fastapi_definition(
+    name: str,
+    path: str,
+    inputs: dict,
+    outputs: dict,
+    is_async: bool,
+):
+    # check that everything is validly named firstly.
+    assert name.isidentifier()
+    assert path.replace("/", "").isalnum()
+    for input in inputs.keys():
+        assert input.isidentifier()
+    for output in outputs.keys():
+        assert output.isidentifier()
+
+    input_def = ", ".join(
+        [f"{key}: {value.__name__}" for key, value in inputs.items()],
+    )
+
+    decorator = f"@app.get('{path}')"
+    function = f"{'async ' if is_async else ''}def {name}({input_def}) -> Dict[str, Any]:\n"  # noqa
+    function_def = "\n".join([decorator, function])
+    function_def.replace("\n ", "\n")
+
+    return function_def
 
 
 # add the API to the existing set of APIs
@@ -172,7 +220,7 @@ def test_api(
     file_name = f"{name}.py"
     testable_python_file_string = "\n".join(
         [
-            FAST_API_IMPORT,
+            BASE_IMPORTS,
             new_imports,
             "\n",
             FASTAPI_SPLIT_CODE,
