@@ -3,57 +3,34 @@ from prompts import (
     CREATE_ENDPOINT,
     ON_CREATE_ERROR,
     FUNCTION_CALLING_ENDPOINT_CREATION,
-    CREATE_ENDPOINT_WITH_FUNCTION_CALLING,
-    ON_CREATE_ERROR_WITH_FUNCTION_CALLING,
 )
 import json
 from dotenv import load_dotenv
 import os
-from gpt_management import openai_chat_response
 import subprocess
 import requests
 import atexit
-import pprint
-
-# COMPLETE:
-# Check for valid python code: use black formatting, seems to work perfectly
-# JSON returning: seems to work fine 99%? Very occasional we get weird errors with "incorrect delimiter" or similar.
-# - seems like the error handling can fix it though.
-
-# TODO:
-# Create fastAPI function definition via templates. Don't generate it with AI.
-# test reliability, find more possible errors that can arise and patch them.
-# turn some repetitive code into callable functions and add more class structure
-# If we fail to create the function, the code should try again starting from scratch (new message history)
-# - We can even get gpt-4 to rewrite the prompt and then try again?
-
-# TODO (MAJOR STEPS):
-# automatically pip install the requirements.
-# Use Chain of thought reasoning for more complex functions. Break them down into smaller components
-# Build a tool that lets you upload external interface documentation with the necessary API keys.
-# - Generated functions can then incorporate these API's
-# Add support for making databases, to create stateful APIs.
-# More advanced testing: generate unit tests with AI?
+from utils import generate_fastapi_definition
+from gpt_management import openAIchat
 
 
 API_FOLDER = "generated_apis"
 TEST_FOLDER = "generated_tests"
 API_FILE_LOCATION = "created_apis.py"
 
-
-FASTAPI_SPLIT_CODE = """
-# --xyz123--
+FASTAPI_CODE = """
 app = FastAPI()
-
-# --xyz123--
 """
 
-FAST_API_IMPORT = "from fastapi import FastAPI\n"
+IMPORT_CODE = """
+from fastapi import FastAPI
+from typing import Dict, Any
+"""
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8000"
 
-MAX_TEST_CHANCES = 4
+MAX_TEST_CHANCES = 5
 
 
 # make an API with fast API
@@ -64,38 +41,44 @@ def create_api(
     outputs: dict,
     functionality: str,
     test_cases: list[dict],
+    is_async: bool = None,
 ) -> str:
-    data = {
-        "prompt": CREATE_ENDPOINT_WITH_FUNCTION_CALLING.format(
-            name=name,
-            path=path,
-            inputs=str(inputs),
-            outputs=str(outputs),
-            functionality=functionality,
-        ),
-        "model": "gpt-3.5-turbo-0613",
-        "system_message": "Only use the functions you have been provided with.",  # noqa
-        "functions": [FUNCTION_CALLING_ENDPOINT_CREATION],
-        "function_call": "create_api",
-    }
-    result_messages = openai_chat_response(**data)
+    function_def = generate_fastapi_definition(
+        name,
+        path,
+        inputs,
+        outputs,
+        is_async,
+    )
+
+    ai_chat = openAIchat(
+        model="gpt-3.5-turbo-0613",
+        system_message="Only use the functions you have been provided with.",
+        functions=[FUNCTION_CALLING_ENDPOINT_CREATION],
+    )
+
+    prompt = CREATE_ENDPOINT.format(
+        name=name,
+        path=path,
+        inputs=str(inputs),
+        outputs=str(outputs),
+        functionality=functionality,
+        function_def=function_def,
+    )
+    ai_response = ai_chat.send_chat(message=prompt, function_call="create_api")
 
     test_result = None
     attempt_count = 0
     while test_result != "success" and attempt_count <= MAX_TEST_CHANCES:
         attempt_count += 1
-        if (
-            result_messages[-1].get("function_call")
-            and result_messages[-1].function_call.name == "create_api"
-        ):
+        if ai_response is not None and ai_response.name == "create_api":
             try:
                 new_function = json.loads(
-                    result_messages[-1].function_call.arguments,
+                    ai_response.arguments,
                     strict=False,
                 )
                 imports = new_function["imports"]
                 function = new_function["endpoint"]
-                # function = function.replace("def", "def def")  # TEST TOOL TO CAUSE INVALID PYTHON
             except Exception as e:
                 test_result = f"Error decoding your JSON function call. Error: {e}, make sure you provide a valid JSON function call."  # noqa
             else:
@@ -109,19 +92,13 @@ def create_api(
         else:
             test_result = "Error, you did not use a valid function call. Use the create_api function to pass in and test the code you generated."  # noqa
 
-        print(result_messages[-1].function_call)
+        print(ai_response)
         print(test_result)
         if test_result != "success":
-            data = {
-                "prompt": ON_CREATE_ERROR_WITH_FUNCTION_CALLING.format(
-                    error=test_result
-                ),
-                "model": "gpt-3.5-turbo-0613",
-                "existing_messages": result_messages,
-                "functions": [FUNCTION_CALLING_ENDPOINT_CREATION],
-                "function_call": "create_api",
-            }
-            result_messages = openai_chat_response(**data)
+            ai_response = ai_chat.send_chat(
+                message=ON_CREATE_ERROR.format(error=test_result),
+                function_call="create_api",
+            )
 
     # add_api(imports, function)
     # server_pid = deploy_apis()
@@ -150,7 +127,7 @@ def add_api(new_imports: str, new_function: str):
 
     functions = code_list[2] + "\n\n" + new_function
 
-    updated_api_file_set = [updated_imports, FASTAPI_SPLIT_CODE, functions]
+    updated_api_file_set = [updated_imports, FASTAPI_CODE, functions]
     updated_api_file = "\n".join(updated_api_file_set)
 
     with open(api_location, "w") as api_file:
@@ -172,10 +149,10 @@ def test_api(
     file_name = f"{name}.py"
     testable_python_file_string = "\n".join(
         [
-            FAST_API_IMPORT,
+            IMPORT_CODE,
             new_imports,
             "\n",
-            FASTAPI_SPLIT_CODE,
+            FASTAPI_CODE,
             "\n",
             new_function,
         ]
@@ -287,7 +264,8 @@ def undeploy_apis(pid: int):
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-repetition = 10
+repetition = 20
+count_success = 0
 for i in range(repetition):
     status = create_api(
         "test_func2",
@@ -339,3 +317,8 @@ for i in range(repetition):
         ],
     )
     print(status)
+    if status == "success":
+        count_success += 1
+
+print(f"successes: {count_success}")
+print(f"out of   : {repetition}")

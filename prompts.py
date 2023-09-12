@@ -1,30 +1,30 @@
-CREATE_ENDPOINT = """
-Your goal is to create a Python FastAPI API endpoint.
-You will return a json object with two elements:
-"imports": python code of the imports section. Can be empty if not needed.
-"endpoint": python code for the FastAPI API endpoint function, including the decorator.
-It is essential that you include the FastAPI decorator.
-Your response is going to be parsed automatically into a JSON object, so return nothing except the valid json.
-Do not import FastAPI.
+# CREATE_ENDPOINT = """
+# Your goal is to create a Python FastAPI API endpoint.
+# You will return a json object with two elements:
+# "imports": python code of the imports section. Can be empty if not needed.
+# "endpoint": python code for the FastAPI API endpoint function, including the decorator.
+# It is essential that you include the FastAPI decorator.
+# Your response is going to be parsed automatically into a JSON object, so return nothing except the valid json.
+# Do not import FastAPI.
 
-The name of the endpoint is {name}, the url path is {path}
-The function takes in the following parameters: {inputs}
-you can decide to use path or query parameters for the inputs.
-the function outputs the following: {outputs}
+# The name of the endpoint is {name}, the url path is {path}
+# The function takes in the following parameters: {inputs}
+# you can decide to use path or query parameters for the inputs.
+# the function outputs the following: {outputs}
 
-This is the description of the endpoint function:
-{functionality}
-"""
+# This is the description of the endpoint function:
+# {functionality}
+# """
 
 
-ON_CREATE_ERROR = """
-Error when testing the function.
-Review the original instructions, and modify your output based on the error:
-{error}
+# ON_CREATE_ERROR = """
+# Error when testing the function.
+# Review the original instructions, and modify your output based on the error:
+# {error}
 
-Do not return anything except the JSON object with "imports" and "endpoint".
-Do not include any apology message or other useless text.
-"""
+# Do not return anything except the JSON object with "imports" and "endpoint".
+# Do not include any apology message or other useless text.
+# """
 
 FUNCTION_CALLING_ENDPOINT_CREATION = {
     "name": "create_api",
@@ -46,28 +46,70 @@ FUNCTION_CALLING_ENDPOINT_CREATION = {
 }
 
 
-CREATE_ENDPOINT_WITH_FUNCTION_CALLING = """
+CREATE_ENDPOINT = """
 Your goal is to create a Python FastAPI API endpoint.
+It is essential that your function calls are valid JSON.
 Call the create_api function with the two arguments:
 "imports": python code of the imports section. Can be empty if not needed.
 "endpoint": python code for the FastAPI API endpoint function, including the decorator.
 It is essential that you include the FastAPI decorator.
-Do not import FastAPI.
+Do not import FastAPI. 
+Do not add any comments. 
 
 The name of the endpoint is {name}, the url path is {path}
-The function takes in the following parameters: {inputs}
+The endpoint function takes in the following parameters: {inputs}
 you can decide to use path or query parameters for the inputs.
-the function outputs the following: {outputs}
+the endpoint function outputs the following: {outputs}
 
 This is the description of the endpoint function:
 {functionality}
+
+The function decorator and definition must be the following:
+{function_def}
 """
 
 
-ON_CREATE_ERROR_WITH_FUNCTION_CALLING = """
+ON_CREATE_ERROR = """
 Error when testing the API endpoint you passed in.
 Review the original instructions, and modify your output based on the error:
 {error}
 
 Do not include any apology message or other useless text.
+Make sure your function decorator and definition match the one specified in the original message.
+
 """
+
+ONE_SHOT_PROMPT_USER = """
+Your goal is to create a Python FastAPI API endpoint.
+It is essential that your function calls are valid JSON.
+Call the create_api function with the two arguments:
+"imports": python code of the imports section. Can be empty if not needed.
+"endpoint": python code for the FastAPI API endpoint function, including the
+decorator.
+It is essential that you include the FastAPI decorator.
+Do not import FastAPI.
+Do not add any comments.
+
+The name of the endpoint is specific_power, the url path is /tests/set2/
+The endpoint function takes in the following parameters: {'ability': 'str', 'exponent': 'float'}
+you can decide to use path or query parameters for the inputs.
+the endpoint function outputs the following: {'result': 'float'}
+
+This is the description of the endpoint function:
+take the logarithm of the sum of the ascii character values of the ability
+input.
+The base of the log is 5 if ability starts with an 'h' and ends with a 't', otherwise its 10.
+After getting the logarithm, return it to the power of exponent.
+Use the math library in this function.
+
+
+The function decorator and definition must be the following:
+@app.get('/tests/set2/')
+def specific_power(ability: str, exponent: float) -> Dict[str, Any]:
+
+"""
+
+ONE_SHOT_PROMPT_FUNCTION_ARGS = {
+    "imports": "import math",
+    "endpoint": "@app.get('/tests/set2/')\ndef specific_power(ability: str, exponent: float) -> Dict[str, Any]:\n    base = 5 if ability.startswith('h') and ability.endswith('t') else 10\n    log_sum = math.log(sum(ord(c) for c in ability), base)\n    result = math.pow(log_sum, exponent)\n    return {'result': result}",
+}
