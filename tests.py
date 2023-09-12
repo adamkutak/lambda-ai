@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import openai
 import os
-from apisv2 import APIFunction
+from apis import APIEnvironment, APIFile, APIFunction
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -184,3 +184,173 @@ Use numpy's matrix functionality to speed up computation time.
         build_result_list.append(api_function.build_attempts)
 
     print(build_result_list)
+
+
+def test_create_multiple_in_live_file():
+    master_api_file = APIFile("my_end_points_test_1", "generated_apis")
+
+    api_function_1 = APIFunction(
+        "subtract_quantity",
+        "/tests/set1/",
+        {
+            "item_id": "int",
+            "status": "bool",
+            "bought": "int",
+        },
+        {
+            "item_id": "int",
+            "quantity": "int",
+        },
+        "quantity is 100. If status is true, deduct bought from quantity.",
+        test_cases=[
+            {
+                "input": {
+                    "item_id": 9478,
+                    "status": True,
+                    "bought": 99,
+                },
+                "output": {
+                    "item_id": 9478,
+                    "quantity": 1,
+                },
+            },
+            {
+                "input": {
+                    "item_id": 1234,
+                    "status": False,
+                    "bought": 99,
+                },
+                "output": {
+                    "item_id": 1234,
+                    "quantity": 100,
+                },
+            },
+            {
+                "input": {
+                    "item_id": 645609,
+                    "status": True,
+                    "bought": 105,
+                },
+                "output": {
+                    "item_id": 645609,
+                    "quantity": -5,
+                },
+            },
+        ],
+    )
+    api_function_1.create_api_function()
+
+    if api_function_1.api_function_created:
+        master_api_file.add_function(api_function_1.api_function_created)
+    else:
+        print(f"error: function {api_function_1.name} failed to be created")
+
+    function_def = """take the logarithm of the sum of the ascii character values of the ability input.
+The base of the log is 5 if ability starts with an 'h' and ends with a 't', otherwise its 10. 
+After getting the logarithm, return it to the power of exponent. 
+Use the math library in this function.
+"""
+    test_abilities = [
+        "heartquiet".encode("ascii").decode("ascii"),
+        "harpoon".encode("ascii").decode("ascii"),
+    ]
+    api_function_2 = APIFunction(
+        "specific_power",
+        "/tests/set2/",
+        {
+            "ability": "str",
+            "exponent": "float",
+        },
+        {
+            "result": "float",
+        },
+        function_def,
+        test_cases=[
+            {
+                "input": {
+                    "ability": test_abilities[0],
+                    "exponent": 2,
+                },
+                "output": {
+                    "result": 18.854225346913122,
+                },
+            },
+            {
+                "input": {
+                    "ability": test_abilities[1],
+                    "exponent": 0.2,
+                },
+                "output": {
+                    "result": 1.2356224461821987,
+                },
+            },
+        ],
+    )
+
+    api_function_2.create_api_function()
+
+    if api_function_2.api_function_created:
+        master_api_file.add_function(api_function_2.api_function_created)
+    else:
+        print(f"error: function {api_function_2.name} failed to be created")
+
+    #     function_def = """take the logarithm of the sum of the ascii character values of the ability input.
+    # The base of the log is 5 if ability starts with an 'h' and ends with a 't', otherwise its 10.
+    # After getting the logarithm, return it to the power of exponent.
+    # Use the math library in this function.
+    # """
+    #     api_function_3 = APIFunction(
+    #         "elipse_area_calc",
+    #         "/tests/elipse_calc/",
+    #         {
+    #             "height": "float",
+    #             "width": "float",
+    #         },
+    #         {
+    #             "result": "float",
+    #         },
+    #         function_def,
+    #         test_cases=[
+    #             {
+    #                 "input": {
+    #                     "height": 5.2,
+    #                     "width": 1.36,
+    #                 },
+    #                 "output": {
+    #                     "result": 5.55434,
+    #                 },
+    #             },
+    #             {
+    #                 "input": {
+    #                     "height": 60.2,
+    #                     "width": 60.2,
+    #                 },
+    #                 "output": {
+    #                     "result": 2846.31436,
+    #                 },
+    #             },
+    #             {
+    #                 "input": {
+    #                     "height": 0.02,
+    #                     "width": 10,
+    #                 },
+    #                 "output": {
+    #                     "result": 0.15708,
+    #                 },
+    #             },
+    #         ],
+    #     )
+
+    #     if api_function_3.api_function_created:
+    #         master_api_file.add_function(api_function_3.api_function_created)
+    #     else:
+    #         print(f"error: function {api_function_3.name} failed to be created")
+
+    master_api_env = APIEnvironment(api_file=master_api_file)
+
+    master_api_env.deploy()
+    breakpoint()  # break here and test with your browser, then continue when ready!
+    master_api_env.undeploy()
+
+
+test_create_multiple_in_live_file()

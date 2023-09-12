@@ -156,3 +156,4 @@ cython_debug/
 .vscode/
 /generated_tests
 /generated_apis
+/venv
