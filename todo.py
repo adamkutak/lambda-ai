@@ -21,3 +21,4 @@
 # - Generated functions can then incorporate these API's
 # Add support for making databases, to create stateful APIs.
 # use GPT-4 eventually for far better performance.
+# telemetry/logging of actions taken.

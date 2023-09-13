@@ -1,5 +1,5 @@
 from typing import Dict
-from prompts import (
+from lambdaai.prompts import (
     CREATE_ENDPOINT,
     ON_CREATE_ERROR,
     FUNCTION_CALLING_ENDPOINT_CREATION,
@@ -9,8 +9,8 @@ from prompts import (
 import subprocess
 import requests
 import atexit
-from utils import close_enough_float, generate_fastapi_definition, get_imports
-from gpt_management import openAIchat
+from lambdaai.utils import close_enough_float, generate_fastapi_definition, get_imports
+from lambdaai.gpt_management import openAIchat
 
 TEST_FOLDER = "generated_tests"
 
