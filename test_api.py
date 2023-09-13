@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import openai
 import os
-from apis import APIEnvironment, APIFile, APIFunction
+from lambdaai.apis import APIEnvironment, APIFile, APIFunction
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -353,4 +353,4 @@ Use the math library in this function.
     master_api_env.undeploy()
 
 
-test_create_multiple_in_live_file()
+test_basic_1()
