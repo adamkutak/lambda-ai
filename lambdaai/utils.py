@@ -1,4 +1,5 @@
 import math
+import sqlite3
 
 SAFE_NAME_CHARACTERS = "/_"
 
@@ -65,3 +66,14 @@ def get_imports(imports):
             library = line.split()[1]
             libraries.append(library)
     return libraries
+
+
+def execute_sql(db_path: str, sql: str):
+    connection = sqlite3.connect(db_path)
+    crsr = connection.cursor()
+    result = crsr.execute(sql)
+    if "SELECT" in sql:
+        result = result.fetchall()
+    connection.commit()
+    connection.close()
+    return result

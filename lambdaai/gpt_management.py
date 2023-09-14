@@ -11,7 +11,6 @@ class openAIchat:
         model: str = "gpt-3.5-turbo-16k",
         system_message: str = None,
         functions: dict = None,
-        one_shot: list[dict] = None,
     ):
         self.model = model
         self.messages = []
@@ -95,7 +94,6 @@ class openAIchat:
     def get_function_call_args(
         ai_response,
         expected_function,
-        expected_arguments,
     ):
         assert ai_response.name == expected_function
 

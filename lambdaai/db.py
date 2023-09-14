@@ -39,9 +39,6 @@ class DB:
             create_table_sql += f"{col_name} {col_type} {col_constraints}, "
 
         create_table_sql = create_table_sql[:-2] + ")"
-
-        breakpoint()
-
         crsr.execute(create_table_sql)
 
         connection.commit()
@@ -61,37 +58,47 @@ class DB:
         connection.commit()
         connection.close()
 
-    def execute_sql(self, sql: str):
-        connection = sqlite3.connect(self.path)
-        crsr = connection.cursor()
-        crsr.execute(sql)
-        connection.commit()
-        connection.close()
-
     def list_tables(self):
         return self.table_names
 
     def view_table_details(self, table_name: str):
-        conn = sqlite3.connect(self.name)
-        cur = conn.cursor()
-        cur.execute(f"PRAGMA table_info({table_name})")
+        assert table_name in self.table_names
+
+        connection = sqlite3.connect(self.path)
+        crsr = connection.cursor()
+        crsr.execute(f"PRAGMA table_info({table_name})")
 
         output = ""
-        columns = cur.fetchall()
+        columns = crsr.fetchall()
         output += f"Table {table_name} has {len(columns)} columns:\n"
         for column in columns:
             output += f"- {column[1]}: {column[2]}\n"
             if column[3] == 1:
                 output += "  - NOT NULL constraint\n"
-            if column[4] != "":
-                output += f"  - DEFAULT value: {column[4]}\n"
             if column[5] == 1:
                 output += "  - PRIMARY KEY constraint\n"
-        cur.execute(f"SELECT * FROM {table_name} LIMIT {MAX_ROWS_TO_DISPLAY}")
-        rows = cur.fetchall()
-        output += f"Table {table_name} has {len(rows)} rows:\n"
-        for row in rows:
-            output += str(row) + "\n"
 
-        conn.close()
+        crsr.execute(f"SELECT * FROM {table_name} LIMIT {MAX_ROWS_TO_DISPLAY}")
+        rows = crsr.fetchall()
+
+        if len(rows) > 0:
+            output += f"Sample of Table {table_name} rows:\n"
+            for row in rows:
+                output += str(row) + "\n"
+
+        connection.close()
         return output
+
+    def view_db_details(self):
+        db_output = ""
+        for table in self.table_names:
+            db_output += self.view_table_details(table)
+
+        return db_output
+
+    def insert_db_path_into_function_exec_calls(self, function_code: str) -> str:
+        new_function_code = function_code.replace(
+            "execute_sql(", f"execute_sql('{self.path}', "
+        )
+
+        return new_function_code

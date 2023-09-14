@@ -1,4 +1,5 @@
 from lambdaai.db import DB
+import os
 
 
 def test_createdb_add_drop_tables():
@@ -36,7 +37,19 @@ def test_createdb_add_drop_tables():
     test_db.add_table("Items", table_1_columns)
     test_db.add_table("Employee", table_2_columns)
 
+    table_1_view = test_db.view_table_details("Items")
+    table_2_view = test_db.view_table_details("Employee")
+
+    print("--------------------------------------------")
+    print(table_1_view)
+    print("--------------------------------------------")
+    print(table_2_view)
+    print("--------------------------------------------")
+
+    test_db.drop_table("Items")
     test_db.drop_table("Employee")
+
+    os.remove(test_db.path)
 
 
 test_createdb_add_drop_tables()

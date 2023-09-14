@@ -5,12 +5,14 @@ from lambdaai.prompts import (
     FUNCTION_CALLING_ENDPOINT_CREATION,
     ONE_SHOT_PROMPT_USER,
     ONE_SHOT_PROMPT_FUNCTION_ARGS,
+    CREATE_ENDPOINT_WITH_DB,
 )
 import subprocess
 import requests
 import atexit
 from lambdaai.utils import close_enough_float, generate_fastapi_definition, get_imports
 from lambdaai.gpt_management import openAIchat
+from lambdaai.db import DB
 
 TEST_FOLDER = "generated_tests"
 
@@ -18,7 +20,10 @@ FASTAPI_CODE = """
 app = FastAPI()
 """
 
-IMPORT_CODE = ["from fastapi import FastAPI", "from typing import Dict, Any"]
+IMPORT_CODE = [
+    "from fastapi import FastAPI",
+    "from typing import Dict, Any",
+]
 
 
 DEFAULT_HOST = "127.0.0.1"
@@ -26,6 +31,17 @@ DEFAULT_PORT = "8000"
 
 MAX_TEST_ATTEMPTS = 5
 MAX_BUILD_ATTEMPTS = 3
+
+SQL_EXEC_FUNCTION = """def execute_sql(db_path: str, sql: str):
+    connection = sqlite3.connect(db_path)
+    crsr = connection.cursor()
+    result = crsr.execute(sql)
+    if "SELECT" in sql:
+        result = result.fetchall()
+    connection.commit()
+    connection.close()
+    return result
+"""
 
 
 class APIFunction:
@@ -38,6 +54,7 @@ class APIFunction:
         functionality: str,
         test_cases: list[dict],
         is_async: bool = None,
+        attached_db: DB = None,
     ):
         self.name = name
         self.path = path
@@ -48,6 +65,7 @@ class APIFunction:
         self.is_async = is_async
         self.build_attempts = []
         self.api_function_created = {}
+        self.attached_db = attached_db
 
     def create_api_function(self) -> str:
         result_code = 1
@@ -75,16 +93,29 @@ class APIFunction:
             system_message="Only use the functions you have been provided with.",  # noqa
             functions=[FUNCTION_CALLING_ENDPOINT_CREATION],
         )
-        ai_chat.add_one_shot_prompt(ONE_SHOT_PROMPT_USER, ONE_SHOT_PROMPT_FUNCTION_ARGS)
 
-        prompt = CREATE_ENDPOINT.format(
-            name=self.name,
-            path=self.path,
-            inputs=str(self.inputs),
-            outputs=str(self.outputs),
-            functionality=self.functionality,
-            function_def=function_def,
-        )
+        if self.attached_db:
+            prompt = CREATE_ENDPOINT_WITH_DB.format(
+                name=self.name,
+                path=self.path,
+                inputs=str(self.inputs),
+                outputs=str(self.outputs),
+                functionality=self.functionality,
+                function_def=function_def,
+                table_list=self.attached_db.view_db_details(),
+            )
+        else:
+            ai_chat.add_one_shot_prompt(
+                ONE_SHOT_PROMPT_USER, ONE_SHOT_PROMPT_FUNCTION_ARGS
+            )
+            prompt = CREATE_ENDPOINT.format(
+                name=self.name,
+                path=self.path,
+                inputs=str(self.inputs),
+                outputs=str(self.outputs),
+                functionality=self.functionality,
+                function_def=function_def,
+            )
         ai_response = ai_chat.send_chat(
             message=prompt,
             function_call="create_api",
@@ -111,11 +142,16 @@ class APIFunction:
             function_call_args = openAIchat.get_function_call_args(
                 ai_response,
                 "create_api",
-                ["endpoint", "imports"],
             )
+            if self.attached_db:
+                function = self.attached_db.insert_db_path_into_function_exec_calls(
+                    function_call_args["endpoint"]
+                )
+            else:
+                function = function_call_args["endpoint"]
             self.api_function_created["name"] = self.name
             self.api_function_created["path"] = self.path
-            self.api_function_created["function_code"] = function_call_args["endpoint"]
+            self.api_function_created["function_code"] = function
             self.api_function_created["imports"] = function_call_args["imports"]
 
         return result_code, message
@@ -132,14 +168,18 @@ class APIFunction:
         function_call_args = openAIchat.get_function_call_args(
             ai_response,
             "create_api",
-            ["endpoint", "imports"],
         )
         imports = function_call_args["imports"]
         function = function_call_args["endpoint"]
+        if self.attached_db:
+            function = self.attached_db.insert_db_path_into_function_exec_calls(
+                function
+            )
         print(function)
 
         test_file_name = f"test_{self.name}"
-        test_api_file = APIFile(test_file_name)
+        attach_db = self.attached_db is not None
+        test_api_file = APIFile(test_file_name, attach_db=attach_db)
         test_api_file.add_function(
             {
                 "name": self.name,
@@ -187,7 +227,7 @@ class APIFunction:
 
 
 class APIFile:
-    def __init__(self, name: str, file_path: str = None):
+    def __init__(self, name: str, file_path: str = None, attach_db: bool = False):
         self.name = name
         self.functions = {}
         self.imports = set(IMPORT_CODE)
@@ -195,6 +235,16 @@ class APIFile:
             self.file_path = file_path + "/" + self.name + ".py"
         else:
             self.file_path = TEST_FOLDER + "/" + self.name + ".py"
+
+        if attach_db:
+            self.add_function(
+                {
+                    "name": "execute_sql",
+                    "path": "fake_sql_path/",
+                    "function_code": SQL_EXEC_FUNCTION,
+                    "imports": "import sqlite3",
+                }
+            )
 
     def add_function(self, api_function: Dict[str, str]) -> str:
         assert api_function["name"] not in self.functions
@@ -237,6 +287,19 @@ class APIFile:
             return 1, f"{black_subprocess_error}. Python is likely invalid."
         return 0, "success"
 
+    def check_python(self):
+        try:
+            subprocess.run(
+                ["python", self.file_path],
+                check=True,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            python_subprocess_error = e.stderr.decode("utf-8")
+            return 1, f"{python_subprocess_error}"
+
+        return 0, "success"
+
     def build_file(self):
         imports = "\n".join(self.imports)
         file_string = "\n".join(
@@ -253,19 +316,6 @@ class APIFile:
             file_string += "\n"
 
         return file_string
-
-    def check_python(self):
-        try:
-            subprocess.run(
-                ["python", self.file_path],
-                check=True,
-                capture_output=True,
-            )
-        except subprocess.CalledProcessError as e:
-            python_subprocess_error = e.stderr.decode("utf-8")
-            return 1, f"{python_subprocess_error}"
-
-        return 0, "success"
 
 
 class APIEnvironment:
