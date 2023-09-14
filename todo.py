@@ -12,11 +12,19 @@
 
 
 # TODO:
+# minor: validating the json in the validate_and_test_function is sort of wierd
+# - if we ever want to preprocess the ai output, we can't (or have to do it in 2 places)
+# minor: figure out how to import the execute_sql call, we don't want to have to copy it into the api_file.
 # Use Chain of thought reasoning for more complex functions. Break them down into smaller components
+# one-shot preprompting WITH databases.
 
 
 # TODO (MAJOR STEPS):
+# auto-testing: can we make testing easier for the user? Especially when DB's are involved
+# - get the AI to generate tests, or at least write some rows to the sql DB to test the api functions with the DB.
+# - without this, the user has to know whats in the DB ahead of time, makes things much harder to test for non-technical user.
 # create a virtual environment to containerize the application? - Ask Dad about this one.
+# - some form of containerization/compartmentalization
 # Build a tool that lets you upload external interface documentation with the necessary API keys.
 # - Generated functions can then incorporate these API's
 # Add support for making databases, to create stateful APIs.

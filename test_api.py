@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 import openai
 import os
 from lambdaai.apis import APIEnvironment, APIFile, APIFunction
+from lambdaai.db import DB
+from lambdaai.utils import execute_sql
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -294,63 +296,90 @@ Use the math library in this function.
     else:
         print(f"error: function {api_function_2.name} failed to be created")
 
-    #     function_def = """take the logarithm of the sum of the ascii character values of the ability input.
-    # The base of the log is 5 if ability starts with an 'h' and ends with a 't', otherwise its 10.
-    # After getting the logarithm, return it to the power of exponent.
-    # Use the math library in this function.
-    # """
-    #     api_function_3 = APIFunction(
-    #         "elipse_area_calc",
-    #         "/tests/elipse_calc/",
-    #         {
-    #             "height": "float",
-    #             "width": "float",
-    #         },
-    #         {
-    #             "result": "float",
-    #         },
-    #         function_def,
-    #         test_cases=[
-    #             {
-    #                 "input": {
-    #                     "height": 5.2,
-    #                     "width": 1.36,
-    #                 },
-    #                 "output": {
-    #                     "result": 5.55434,
-    #                 },
-    #             },
-    #             {
-    #                 "input": {
-    #                     "height": 60.2,
-    #                     "width": 60.2,
-    #                 },
-    #                 "output": {
-    #                     "result": 2846.31436,
-    #                 },
-    #             },
-    #             {
-    #                 "input": {
-    #                     "height": 0.02,
-    #                     "width": 10,
-    #                 },
-    #                 "output": {
-    #                     "result": 0.15708,
-    #                 },
-    #             },
-    #         ],
-    #     )
-
-    #     if api_function_3.api_function_created:
-    #         master_api_file.add_function(api_function_3.api_function_created)
-    #     else:
-    #         print(f"error: function {api_function_3.name} failed to be created")
-
     master_api_env = APIEnvironment(api_file=master_api_file)
 
     master_api_env.deploy()
-    breakpoint()  # break here and test with your browser, then continue when ready!
+    breakpoint()  # break here and test with your browser, then continue when ready
     master_api_env.undeploy()
 
 
+def test_basic_with_database():
+    test_db = DB("my_test_db", "generated_dbs")
+    table_1_columns = {
+        "item_id": {
+            "type": "INTEGER",
+            "constraints": ["PRIMARY KEY"],
+        },
+        "name": {
+            "type": "VARCHAR(255)",
+            "constraints": ["NOT NULL"],
+        },
+        "quantity": {
+            "type": "INTEGER",
+            "constraints": ["NOT NULL"],
+        },
+        "price": {
+            "type": "FLOAT",
+            "constraints": ["NOT NULL"],
+        },
+    }
+    test_db.add_table("Items", table_1_columns)
+
+    insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)
+VALUES (100, 'Banana', 57, 1.05)"""
+    execute_sql(test_db.path, insert_test_values)
+
+    insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)
+VALUES (200, 'Macaroni', 450, 3.40)"""
+    execute_sql(test_db.path, insert_test_values)
+
+    api_function_1 = APIFunction(
+        "sell_quantity",
+        "/tests/sell_quantity/",
+        {
+            "item_id": "int",
+            "status": "bool",
+            "bought": "int",
+        },
+        {
+            "cost": "int",
+        },
+        "if status is true, sell the bought quantity of item_id from the database. Return the cost of the purchase.",
+        test_cases=[
+            {
+                "input": {
+                    "item_id": 100,
+                    "status": True,
+                    "bought": 6,
+                },
+                "output": {
+                    "cost": 6.30,
+                },
+            },
+            {
+                "input": {
+                    "item_id": 200,
+                    "status": False,
+                    "bought": 120,
+                },
+                "output": {
+                    "cost": 0,
+                },
+            },
+        ],
+        attached_db=test_db,
+    )
+    api_function_1.create_api_function()
+
+    # cleanup
+    result = execute_sql(test_db.path, "SELECT * FROM Items")
+    print(result)
+    test_db.drop_table("Items")
+
+    os.remove(test_db.path)
+
+
 test_basic_1()
+test_basic_2()
+test_create_multiple_in_live_file()
+test_basic_with_database()

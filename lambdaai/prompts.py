@@ -85,3 +85,35 @@ ONE_SHOT_PROMPT_FUNCTION_ARGS = {
     "imports": "import math",
     "endpoint": "@app.get('/tests/set2/')\ndef specific_power(ability: str, exponent: float) -> Dict[str, Any]:\n    base = 5 if ability.startswith('h') and ability.endswith('t') else 10\n    log_sum = math.log(sum(ord(c) for c in ability), base)\n    result = math.pow(log_sum, exponent)\n    return {'result': result}",
 }
+
+CREATE_ENDPOINT_WITH_DB = """
+Your goal is to create a Python FastAPI API endpoint.
+It is essential that your function calls are valid JSON.
+Call the create_api function with the two arguments:
+"imports": python code of the imports section. Can be empty if not needed.
+"endpoint": python code for the FastAPI API endpoint function, including the decorator.
+It is essential that you include the FastAPI decorator.
+Do not import FastAPI. 
+Do not add any comments.
+
+The name of the endpoint is {name}, the url path is {path}
+The endpoint function takes in the following parameters: {inputs}
+you can decide to use path or query parameters for the inputs.
+the endpoint function outputs the following: {outputs}
+
+This is the description of the endpoint function:
+{functionality}
+
+The function decorator and definition must be the following:
+{function_def}
+
+There is also a database with the following tables:
+{table_list}
+
+your function may need to perform an SQL operation on one or more of these tables.
+To do some operation on a table (for example, to add, change, or get a row, or create a new column),
+your python code can call the function execute_sql(VALID_SQL_STRING) where VALID_SQL_STRING is valid SQL.
+If using a sql SELECT statement, the return value of execute_sql is a list of tuples, where each tuple is a row.
+If you need to run multiple queries, put each query in a seperate execute_sql() call.
+Do not try to import the execute_sql function. Assume it exists and is usable already.
+"""
