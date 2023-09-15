@@ -58,9 +58,6 @@ class DB:
         connection.commit()
         connection.close()
 
-    def list_tables(self):
-        return self.table_names
-
     def view_table_details(self, table_name: str):
         assert table_name in self.table_names
 
@@ -96,9 +93,25 @@ class DB:
 
         return db_output
 
-    def insert_db_path_into_function_exec_calls(self, function_code: str) -> str:
+    def insert_db_path_into_function_exec_calls(
+        self, function_code: str, for_test: bool = False
+    ) -> str:
+        if for_test:
+            replace_path = "file::memory:?cache=shared"
+        else:
+            replace_path = self.path
         new_function_code = function_code.replace(
-            "execute_sql(", f"execute_sql('{self.path}', "
+            "execute_sql(", f"execute_sql('{replace_path}', "
         )
 
         return new_function_code
+
+    def create_shared_in_memory_copy(self):
+        memory_db = sqlite3.connect("file::memory:?cache=shared")
+        file_db = sqlite3.connect(self.path)
+
+        query = "".join(line for line in file_db.iterdump())
+        memory_db.executescript(query)
+        memory_db.commit()
+
+        return memory_db

@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
 import openai
 import os
-from lambdaai.apis import APIEnvironment, APIFile, APIFunction
+from lambdaai.apis import APIFunction
+from lambdaai.environment import APIEnvironment, APIFile
 from lambdaai.db import DB
 from lambdaai.utils import execute_sql
 

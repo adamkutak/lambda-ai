@@ -55,6 +55,27 @@ class openAIchat:
         else:
             return message.get("content")
 
+    def add_one_shot_prompt(
+        self,
+        input_data,
+        output_data,
+    ):
+        user_message = {"role": "user", "content": input_data}
+        self.messages.append(user_message)
+
+        function_call_response = {
+            "role": "assistant",
+            "content": None,
+            "function_call": {
+                "name": "create_api",
+                "arguments": json.dumps(output_data),
+            },
+        }
+
+        self.messages.append(function_call_response)
+
+        return
+
     def validate_json_function_call(
         ai_response,
         expected_function,
@@ -103,24 +124,3 @@ class openAIchat:
         )
 
         return arguments
-
-    def add_one_shot_prompt(
-        self,
-        input_data,
-        output_data,
-    ):
-        user_message = {"role": "user", "content": input_data}
-        self.messages.append(user_message)
-
-        function_call_response = {
-            "role": "assistant",
-            "content": None,
-            "function_call": {
-                "name": "create_api",
-                "arguments": json.dumps(output_data),
-            },
-        }
-
-        self.messages.append(function_call_response)
-
-        return

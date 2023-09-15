@@ -8,15 +8,18 @@
 # test reliability, find more possible errors that can arise and patch them - (Done for now??)
 # JSON errors: implement 1-shot preprompting to improve performance - DONE, seems perfect.
 # If we fail to create the function, the code should try again starting from scratch (new message history) - DONE
-# automatically pip install the requirements. - DONE
+# automatically pip install the requirements. - DONE (builds requirements file for APIEnv)
 
 
 # TODO:
+# # Add support for making databases, to create stateful APIs (v1 in progress)
 # minor: validating the json in the validate_and_test_function is sort of wierd
 # - if we ever want to preprocess the ai output, we can't (or have to do it in 2 places)
 # minor: figure out how to import the execute_sql call, we don't want to have to copy it into the api_file.
+# minor: DB should be attached to APIEnvironment? Not the API function.
+# - an Env can only have 1 db, but right now the API functions in the env could all point to different DBs.
 # Use Chain of thought reasoning for more complex functions. Break them down into smaller components
-# one-shot preprompting WITH databases.
+# one-shot preprompting WITH databases (and then with chain of thought reasoning as well)
 
 
 # TODO (MAJOR STEPS):
@@ -27,6 +30,5 @@
 # - some form of containerization/compartmentalization
 # Build a tool that lets you upload external interface documentation with the necessary API keys.
 # - Generated functions can then incorporate these API's
-# Add support for making databases, to create stateful APIs.
 # use GPT-4 eventually for far better performance.
 # telemetry/logging of actions taken.
