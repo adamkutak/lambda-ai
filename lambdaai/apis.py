@@ -1,5 +1,4 @@
 from lambdaai.environment import APIFile
-from lambdaai.test_harness import TestHarness
 from lambdaai.prompts import (
     CREATE_ENDPOINT,
     ON_CREATE_ERROR,
@@ -97,12 +96,17 @@ class APIFunction:
         )
 
         # process, validate, and test.
+        from lambdaai.test_harness import TestHarness
+
         result_code = 1
         while result_code > 0 and self.build_attempts[-1] < MAX_TEST_ATTEMPTS:
+            print(ai_response)
             result_code, data = self.process_and_validate_response(ai_response)
+            print(f"process/validation is {result_code}: {data}")
             if result_code == 0:
                 test_harness = TestHarness(self, data)
                 result_code, data = test_harness.perform_test()
+                print(f"testing is {result_code}: {data}")
 
             if result_code > 0:
                 ai_response = ai_chat.send_chat(
@@ -144,7 +148,7 @@ class APIFunction:
                 function
             )
             test_function = self.attached_db.insert_db_path_into_function_exec_calls(
-                function, for_test=True
+                test_function, for_test=True
             )
         print(function)
 

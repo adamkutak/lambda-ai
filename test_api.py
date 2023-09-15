@@ -305,7 +305,7 @@ Use the math library in this function.
 
 
 def test_basic_with_database():
-    test_db = DB("my_test_db", "generated_dbs")
+    my_test_db = DB("my_test_db", "generated_dbs")
     table_1_columns = {
         "item_id": {
             "type": "INTEGER",
@@ -324,15 +324,15 @@ def test_basic_with_database():
             "constraints": ["NOT NULL"],
         },
     }
-    test_db.add_table("Items", table_1_columns)
+    my_test_db.add_table("Items", table_1_columns)
 
     insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)
 VALUES (100, 'Banana', 57, 1.05)"""
-    execute_sql(test_db.path, insert_test_values)
+    execute_sql(my_test_db.path, insert_test_values)
 
     insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)
 VALUES (200, 'Macaroni', 450, 3.40)"""
-    execute_sql(test_db.path, insert_test_values)
+    execute_sql(my_test_db.path, insert_test_values)
 
     api_function_1 = APIFunction(
         "sell_quantity",
@@ -368,16 +368,10 @@ VALUES (200, 'Macaroni', 450, 3.40)"""
                 },
             },
         ],
-        attached_db=test_db,
+        attached_db=my_test_db,
     )
     api_function_1.create_api_function()
-
-    # cleanup
-    result = execute_sql(test_db.path, "SELECT * FROM Items")
-    print(result)
-    test_db.drop_table("Items")
-
-    os.remove(test_db.path)
+    os.remove(my_test_db.path)
 
 
 test_basic_1()

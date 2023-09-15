@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DEFAULT_DB_LOCATION = "generated_dbs"
+DEFAULT_DB_PATH = "generated_dbs"
 MAX_ROWS_TO_DISPLAY = 3
 
 
@@ -16,8 +16,9 @@ class DB:
         assert db_name not in curr_dbs_at_path
 
         self.name = db_name
-        location = location or DEFAULT_DB_LOCATION
+        location = location or DEFAULT_DB_PATH
         self.path = location + "/" + db_name
+        self.test_db_path = location + "/test_dbs/" + db_name
         self.table_names = []
 
     def add_table(
@@ -97,7 +98,7 @@ class DB:
         self, function_code: str, for_test: bool = False
     ) -> str:
         if for_test:
-            replace_path = "file::memory:?cache=shared"
+            replace_path = self.test_db_path
         else:
             replace_path = self.path
         new_function_code = function_code.replace(
@@ -106,12 +107,14 @@ class DB:
 
         return new_function_code
 
-    def create_shared_in_memory_copy(self):
-        memory_db = sqlite3.connect("file::memory:?cache=shared")
+    def create_testing_copy(self):
+        test_db = sqlite3.connect(self.test_db_path)
         file_db = sqlite3.connect(self.path)
 
         query = "".join(line for line in file_db.iterdump())
-        memory_db.executescript(query)
-        memory_db.commit()
+        test_db.executescript(query)
+        test_db.commit()
 
-        return memory_db
+        test_db.close()
+
+        return test_db
