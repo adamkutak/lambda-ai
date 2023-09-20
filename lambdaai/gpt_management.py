@@ -8,7 +8,7 @@ MAX_MESSAGE_CHAR_LENGTH = 3000
 class openAIchat:
     def __init__(
         self,
-        model: str = "gpt-3.5-turbo-16k",
+        model: str = "gpt-3.5-turbo-0613",
         system_message: str = None,
         functions: dict = None,
     ):
@@ -29,7 +29,7 @@ class openAIchat:
         if function_call:
             try_to_call_function = {"name": function_call}
         else:
-            None
+            try_to_call_function = None
 
         if len(message) > MAX_MESSAGE_CHAR_LENGTH:
             message = message[:MAX_MESSAGE_CHAR_LENGTH]
@@ -55,8 +55,9 @@ class openAIchat:
         else:
             return message.get("content")
 
-    def add_one_shot_prompt(
+    def add_function_one_shot_prompt(
         self,
+        name,
         input_data,
         output_data,
     ):
@@ -67,7 +68,7 @@ class openAIchat:
             "role": "assistant",
             "content": None,
             "function_call": {
-                "name": "create_api",
+                "name": name,
                 "arguments": json.dumps(output_data),
             },
         }
@@ -84,11 +85,11 @@ class openAIchat:
         if ai_response is None or ai_response.name != expected_function:
             return (
                 1,
-                f"Error, you did not use a valid function call. Use the {expected_function }function to pass in and test the code you generated.",  # noqa
+                f"Error, you did not use a valid function call. Use the {expected_function } function.",  # noqa
             )
 
         try:
-            new_function = json.loads(
+            function_call_args = json.loads(
                 ai_response.arguments,
                 strict=False,
             )
@@ -100,7 +101,7 @@ class openAIchat:
 
         missing_args = []
         for argument in expected_arguments:
-            out = new_function.get(argument)
+            out = function_call_args.get(argument)
             if out is None:
                 missing_args.append(argument)
 
@@ -110,17 +111,4 @@ class openAIchat:
                 f"Error, the following arguments are missing from the provided function call: {missing_args}",
             )
 
-        return 0, "success"
-
-    def get_function_call_args(
-        ai_response,
-        expected_function,
-    ):
-        assert ai_response.name == expected_function
-
-        arguments = json.loads(
-            ai_response.arguments,
-            strict=False,
-        )
-
-        return arguments
+        return 0, function_call_args

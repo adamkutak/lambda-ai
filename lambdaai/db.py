@@ -101,6 +101,7 @@ class DB:
             replace_path = self.test_db_path
         else:
             replace_path = self.path
+
         new_function_code = function_code.replace(
             "execute_sql(", f"execute_sql('{replace_path}', "
         )

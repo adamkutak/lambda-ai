@@ -2,13 +2,13 @@ import subprocess
 import requests
 import atexit
 from typing import Dict
-from lambdaai.utils import close_enough_float, get_imports
+from lambdaai.utils import get_imports
 
 
 TEST_FOLDER = "generated_tests"
 
 IMPORT_CODE = [
-    "from fastapi import FastAPI",
+    "from fastapi import FastAPI, Request",
     "from typing import Dict, Any",
 ]
 FASTAPI_CODE = """
@@ -24,6 +24,15 @@ SQL_EXEC_FUNCTION = """def execute_sql(db_path: str, sql: str):
     connection.close()
     return result
 """
+
+INTERNAL_500_RETURN_OVERRIDE = """@app.exception_handler(Exception)
+async def server_error_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"message": str(exc)},
+    )
+"""
+
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8000"
 
@@ -38,11 +47,20 @@ class APIFile:
         else:
             self.file_path = TEST_FOLDER + "/" + self.name + ".py"
 
+        self.add_function(
+            {
+                "name": "exception_handler",
+                "path": "exception_handler",
+                "function_code": INTERNAL_500_RETURN_OVERRIDE,
+                "imports": "from fastapi.responses import JSONResponse",
+            }
+        )
+
         if attach_db:
             self.add_function(
                 {
                     "name": "execute_sql",
-                    "path": "",
+                    "path": "execute_sql",
                     "function_code": SQL_EXEC_FUNCTION,
                     "imports": "import sqlite3",
                 }
@@ -148,6 +166,7 @@ class APIEnvironment:
 
         except Exception as e:
             return 1, f"error starting api deployment: {e}"
+
         return 0, "success"
 
     def undeploy(self):

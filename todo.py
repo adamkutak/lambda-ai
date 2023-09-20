@@ -9,27 +9,21 @@
 # JSON errors: implement 1-shot preprompting to improve performance - DONE, seems perfect.
 # If we fail to create the function, the code should try again starting from scratch (new message history) - DONE
 # automatically pip install the requirements. - DONE (builds requirements file for APIEnv)
+# one-shot preprompting WITH databases - DONE
+# Add support for making databases, to create stateful APIs (v1 done)
+# fix error: Internal Server Error. make it return the error to the AI. (v1 done)
 
-
-# TODO:
-# Add support for making databases, to create stateful APIs (v1 in progress)
-# minor: figure out how to import the execute_sql call, we don't want to have to copy it into the api_file.
-# minor: DB should be attached to APIEnvironment? Not the API function.
-# - an Env can only have 1 db, but right now the API functions in the env could all point to different DBs.
+# TODO (generation improvement features):
 # Use Chain of thought reasoning for more complex functions. Break them down into smaller components
-# one-shot preprompting WITH databases (and then with chain of thought reasoning as well)
+# analyzing errors with a specialized AI instance?
 
+# TODO (auto testing):
+# although we implemented a base version, it doesn't really work.
+# instead of generating inputs, we should only generate the sql and maybe outputs as well.
+# this is hard, and requires additional work.
 
 # TODO (MAJOR STEPS):
-# auto-testing: can we make testing easier for the user? Especially when DB's are involved
-# - get the AI to generate tests, or write some rows to the sql DB to test the api functions with the DB.
-# - without this, the user has to know whats in the DB ahead of time, makes things much harder to test for non-technical user.
-# upgrading the error message: improve fetching of the actual issue
-# - sometimes, the error returned to the AI will be uninformative:
-#  - error: Internal Server Error
-#  - error: {"detail":"Not Found"}
-# create a virtual environment to containerize the application? - Ask Dad about this one.
-# - some form of containerization/compartmentalization
+# create a virtual environment to containerize the application?
 # Build a tool that lets you upload external interface documentation with the necessary API keys.
 # - Generated functions can then incorporate these API's
 # use GPT-4 eventually for far better performance.

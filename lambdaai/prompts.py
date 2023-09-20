@@ -17,6 +17,52 @@ FUNCTION_CALLING_ENDPOINT_CREATION = {
     },
 }
 
+FUNCTION_CALLING_TEST_CREATION = {
+    "name": "add_test",
+    "description": "Create a new test case to be run on a FastAPI endpoint",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "input": {
+                "type": "object",
+                "description": "The test inputs. They should match the inputs of the endpoint described.",
+            },
+            "output": {
+                "type": "object",
+                "description": "The test outputs. Make sure they match the output types of the function description.",
+            },
+        },
+        "required": ["input", "output"],
+    },
+}
+
+FUNCTION_CALLING_TEST_CREATION_DB_EXT = {
+    "name": "add_test",
+    "description": "Create a new test case to be run on a FastAPI endpoint",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "input": {
+                "type": "object",
+                "description": "The test inputs. They should match the inputs of the endpoint described.",
+            },
+            "output": {
+                "type": "object",
+                "description": "The test outputs. Make sure they match the output types of the function description.",
+            },
+            "pre_sql": {
+                "type": "list",
+                "description": "A list of str, where each str is a valid SQL you wish to run before the function is tested.",
+            },
+            "post_sql": {
+                "type": "list",
+                "description": "A list of dicts, where each dict has two keys: sql, the sql to run to check the database after the test, and assert_value which is the value you expect your sql to return if the test is successful.",
+            },
+        },
+        "required": ["input", "output", "pre_sql", "post_sql"],
+    },
+}
+
 
 CREATE_ENDPOINT = """
 Your goal is to create a Python FastAPI API endpoint.
@@ -81,10 +127,52 @@ def specific_power(ability: str, exponent: float) -> Dict[str, Any]:
 
 """
 
-ONE_SHOT_PROMPT_FUNCTION_ARGS = {
-    "imports": "import math",
-    "endpoint": "@app.get('/tests/set2/')\ndef specific_power(ability: str, exponent: float) -> Dict[str, Any]:\n    base = 5 if ability.startswith('h') and ability.endswith('t') else 10\n    log_sum = math.log(sum(ord(c) for c in ability), base)\n    result = math.pow(log_sum, exponent)\n    return {'result': result}",
-}
+ONE_SHOT_PROMPT_USER_WITH_DB = """
+Your goal is to create a Python FastAPI API endpoint.
+It is essential that your function calls are valid JSON.
+Call the create_api function with the two arguments:
+"imports": python code of the imports section. Can be empty if not needed.
+"endpoint": python code for the FastAPI API endpoint function, including the decorator.
+It is essential that you include the FastAPI decorator.
+Do not import FastAPI. 
+Do not add any comments.
+
+The name of the endpoint is sell_quantity, the url path is /tests/sell_quantity/
+The endpoint function takes in the following parameters: {'item_id': 'int', 'status': 'bool', 'bought': 'int'}
+you can decide to use path or query parameters for the inputs.
+the endpoint function outputs the following: {'cost': 'float'}
+
+This is the description of the endpoint function:
+if status is true, sell the bought quantity of item_id from the database. Return the logarithm (base 10) of the cost of the purchase. Use the math library to do that.
+
+The function decorator and definition must be the following:
+@app.get('/tests/sell_quantity/')
+def sell_quantity(item_id: int, status: bool, bought: int) -> Dict[str, Any]:
+
+
+There is also a database with the following tables:
+Table Items has 4 columns:
+- item_id: INTEGER
+  - PRIMARY KEY constraint
+- name: VARCHAR(255)
+  - NOT NULL constraint
+- quantity: INTEGER
+  - NOT NULL constraint
+- price: FLOAT
+  - NOT NULL constraint
+Sample of Table Items rows:
+(100, 'Banana', 57, 1.05)
+(200, 'Macaroni', 450, 3.4)
+
+
+your function may need to perform an SQL operation on one or more of these tables.
+To do some operation on a table (for example, to add, change, or get a row, or create a new column),
+your python code can call the function execute_sql(VALID_SQL_STRING) where VALID_SQL_STRING is valid SQL.
+If using a sql SELECT statement, the return value of execute_sql is a list of tuples, where each tuple is a row.
+If you need to run multiple queries, put each query in a seperate execute_sql() call.
+Do not try to import the execute_sql function. Assume it exists and is usable already.
+Careful with variable types when calling SQL. For strings, they need to be wrapped in ''
+"""
 
 CREATE_ENDPOINT_WITH_DB = """
 Your goal is to create a Python FastAPI API endpoint.
@@ -116,4 +204,64 @@ your python code can call the function execute_sql(VALID_SQL_STRING) where VALID
 If using a sql SELECT statement, the return value of execute_sql is a list of tuples, where each tuple is a row.
 If you need to run multiple queries, put each query in a seperate execute_sql() call.
 Do not try to import the execute_sql function. Assume it exists and is usable already.
+Careful with variable types when calling SQL. For strings, they need to be wrapped in ''
+"""
+
+ONE_SHOT_PROMPT_FUNCTION_ARGS = {
+    "imports": "import math",
+    "endpoint": "@app.get('/tests/set2/')\ndef specific_power(ability: str, exponent: float) -> Dict[str, Any]:\n    base = 5 if ability.startswith('h') and ability.endswith('t') else 10\n    log_sum = math.log(sum(ord(c) for c in ability), base)\n    result = math.pow(log_sum, exponent)\n    return {'result': result}",
+}
+
+ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS = {
+    "imports": "import math",
+    "endpoint": "@app.get('/tests/sell_quantity/')\ndef sell_quantity(item_id: int, status: bool, bought: int) -> Dict[str, Any]:\n    import math\n    if status:\n        quantity = execute_sql(f'SELECT quantity FROM Items WHERE item_id = {item_id}')[0][0]\n        if quantity >= bought:\n            execute_sql(f'UPDATE Items SET quantity = quantity - {bought} WHERE item_id = {item_id}')\n            cost = bought * execute_sql(f'SELECT price FROM Items WHERE item_id = {item_id}')[0][0]\n            return {'cost': math.log10(cost)}\n        else:\n            return {'cost': 0.0}\n    else:\n        return {'cost': 0.0}\n",
+}
+
+
+AUTO_TESTER_BUILD_PROMPT = """
+You are an expert test case builder for FastAPI endpoints.
+You must use the "add_test" function given to you. Your function call must be valid JSON.
+You will create a new test case for the following endpoint, named {name}:
+The inputs are: {inputs}
+The outputs are: {outputs}
+
+This is the description of the endpoint:
+{functionality}
+
+For the test case, you must give inputs and outputs that test the endpoint works correctly.
+Do not create test cases that go outside the core functionality of the test case.{ext_str}
+"""
+
+AUTO_TESTER_DATABASE_EXT = """
+This endpoint also uses a database. You must generate the SQL tests in coordination with the input/output test you generate.
+You do this by adding test rows with sql before the endpoint runs with the pre_sql list parameter.
+Then, after the endpoint runs, the post_sql sql will be run, and we will assert the output matches the assert_value.
+Here is an overview of the database:
+{database_info}
+"""
+
+AUTO_TESTER_ON_ERROR = """
+Error on creating test data. The error message is the following:
+{error}
+
+Please retry. 
+"""
+
+AUTO_TESTER_ONESHOT_ARGS = {
+    "input": "{'item_id': 1, 'status': True, 'bought': 80}",
+    "output": "{'item_id': 1, 'quantity': 20}",
+}
+
+AUTO_TESTER_ONESHOT_PROMPT = """
+You are an expert test case builder for FastAPI endpoints.
+You must use the "add_test" function given to you. Your function call must be valid JSON.
+You will create a new test case for the following endpoint, named subtract_quantity:
+The inputs are: {'item_id': 'int', 'status': 'bool', 'bought': 'int'}
+The outputs are: {'item_id': 'int', 'quantity': 'int'}
+
+This is the description of the endpoint:
+quantity is 100. If status is true, deduct bought from quantity.
+
+For the test case, you must give inputs and outputs that test the endpoint works correctly.
+Do not create test cases that go outside the core functionality of the test case.
 """
