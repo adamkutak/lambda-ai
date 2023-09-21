@@ -541,10 +541,58 @@ Use the math library in this function.
     print(build_result_list)
 
 
-# test_basic_1()
-# test_basic_2()
-# test_create_multiple_in_live_file()
-# test_basic_with_database_1()
+def test_basic_with_database_1_autogenerate_tests():
+    my_test_db = DB("my_test_db", "generated_dbs")
+    table_1_columns = {
+        "item_id": {
+            "type": "INTEGER",
+            "constraints": ["PRIMARY KEY"],
+        },
+        "name": {
+            "type": "VARCHAR(255)",
+            "constraints": ["NOT NULL"],
+        },
+        "quantity": {
+            "type": "INTEGER",
+            "constraints": ["NOT NULL"],
+        },
+        "price": {
+            "type": "FLOAT",
+            "constraints": ["NOT NULL"],
+        },
+    }
+    my_test_db.add_table("Items", table_1_columns)
+
+    insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)\nVALUES (300, 'Apple', 600, 3.59)"""
+    execute_sql(my_test_db.path, insert_test_values)
+
+    insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)\nVALUES (400, 'Pineapple', 15, 3.41)"""
+    execute_sql(my_test_db.path, insert_test_values)
+
+    api_function_1 = APIFunction(
+        "sell_quantity",
+        "/tests/sell_quantity/",
+        {
+            "item_id": "int",
+            "status": "bool",
+            "bought": "int",
+        },
+        {
+            "cost": "float",
+        },
+        "if status is true, sell the bought quantity of item_id from the database. Return the logarithm (base 10) of the cost of the purchase. Use the math library to do that.",
+        test_cases=[],
+        attached_db=my_test_db,
+    )
+    api_function_1.create_api_function()
+    os.remove(my_test_db.path)
+
+
+test_basic_1()
+test_basic_2()
+test_create_multiple_in_live_file()
+test_basic_with_database_1()
 test_basic_with_database_2()
 # test_basic_1_autogenerate_tests()
 # test_basic_2_autogenerate_tests()
+# test_basic_with_database_1_autogenerate_tests()

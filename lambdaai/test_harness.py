@@ -5,11 +5,16 @@ from lambdaai.gpt_management import openAIchat
 from lambdaai.prompts import (
     AUTO_TESTER_DATABASE_EXT,
     AUTO_TESTER_ON_ERROR,
-    FUNCTION_CALLING_TEST_CREATION,
-    AUTO_TESTER_BUILD_PROMPT,
-    FUNCTION_CALLING_TEST_CREATION_DB_EXT,
-    AUTO_TESTER_ONESHOT_PROMPT,
     AUTO_TESTER_ONESHOT_ARGS,
+    AUTO_TESTER_ONESHOT_PROMPT,
+    AUTO_TESTER_BUILD_PROMPT,
+)
+from lambdaai.gpt_function_calls import (
+    FUNCTION_CALLING_TEST_CREATION,
+    FUNCTION_CALLING_ENDPOINT_CREATION,
+    FUNCTION_CALLING_TEST_CREATION_DB_EXT,
+    FunctionCallTest,
+    FunctionCallTestWithDB,
 )
 from lambdaai.utils import close_enough_float, execute_sql
 
@@ -91,19 +96,19 @@ class TestHarness:
                 else FUNCTION_CALLING_TEST_CREATION
             ],
         )
-        ai_chat.add_function_one_shot_prompt(
-            "add_test", AUTO_TESTER_ONESHOT_PROMPT, AUTO_TESTER_ONESHOT_ARGS
-        )
 
         ext_str = ""
         attached_db = api_function.attached_db if api_function.attached_db else None
-        args = ["input", "output"]
         if attached_db:
             ext_str = AUTO_TESTER_DATABASE_EXT.format(
                 database_info=attached_db.view_db_details()
             )
-            args.extend(["pre_sql", "post_sql"])
-
+            function_kind = FunctionCallTestWithDB
+        else:
+            ai_chat.add_function_one_shot_prompt(
+                "add_test", AUTO_TESTER_ONESHOT_PROMPT, AUTO_TESTER_ONESHOT_ARGS
+            )
+            function_kind = FunctionCallTest
         prompt = AUTO_TESTER_BUILD_PROMPT.format(
             name=api_function.name,
             inputs=api_function.inputs,
@@ -111,7 +116,6 @@ class TestHarness:
             functionality=api_function.functionality,
             ext_str=ext_str,
         )
-
         for _ in range(test_count):
             ai_response = ai_chat.send_chat(message=prompt, function_call="add_test")
             print(ai_response)
@@ -119,7 +123,7 @@ class TestHarness:
             build_attempts = 0
             while result_code > 0 and build_attempts < MAX_AUTO_BUILD_ATTEMPTS:
                 result_code, data = openAIchat.validate_json_function_call(
-                    ai_response, "add_test", args
+                    ai_response, "add_test", function_kind
                 )
                 if result_code == 0:
                     generated_test_case = data

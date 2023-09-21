@@ -16,11 +16,12 @@
 # TODO (generation improvement features):
 # Use Chain of thought reasoning for more complex functions. Break them down into smaller components
 # analyzing errors with a specialized AI instance?
+# ai has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
+# - it tries to make highly compounded sql, which causes it to get things slightly wrong or miss a minor instruction
 
 # TODO (auto testing):
 # although we implemented a base version, it doesn't really work.
 # instead of generating inputs, we should only generate the sql and maybe outputs as well.
-# this is hard, and requires additional work.
 
 # TODO (MAJOR STEPS):
 # create a virtual environment to containerize the application?

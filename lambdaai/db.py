@@ -12,14 +12,20 @@ class DB:
         location: str = None,
     ):
         db_name = f"{name}.db"
-        curr_dbs_at_path = os.listdir(location)
-        assert db_name not in curr_dbs_at_path
 
         self.name = db_name
         location = location or DEFAULT_DB_PATH
         self.path = location + "/" + db_name
         self.test_db_path = location + "/test_dbs/" + db_name
         self.table_names = []
+
+        curr_dbs_at_path = os.listdir(location)
+        # TODO: temporarily removing existing file for ease of use...
+        if db_name in curr_dbs_at_path:
+            os.remove(self.path)
+        curr_dbs_at_test_path = os.listdir(location + "/test_dbs")
+        if db_name in curr_dbs_at_test_path:
+            os.remove(self.test_db_path)
 
     def add_table(
         self,

@@ -3,11 +3,14 @@ from lambdaai.prompts import (
     CREATE_ENDPOINT,
     CREATE_ENDPOINT_WITH_DB,
     ON_CREATE_ERROR,
-    FUNCTION_CALLING_ENDPOINT_CREATION,
     ONE_SHOT_PROMPT_USER,
     ONE_SHOT_PROMPT_FUNCTION_ARGS,
     ONE_SHOT_PROMPT_USER_WITH_DB,
     ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS,
+)
+from lambdaai.gpt_function_calls import (
+    FUNCTION_CALLING_ENDPOINT_CREATION,
+    EndpointCreation,
 )
 from lambdaai.utils import generate_fastapi_definition
 from lambdaai.gpt_management import openAIchat
@@ -105,6 +108,7 @@ class APIFunction:
                 functionality=self.functionality,
                 function_def=function_def,
             )
+
         ai_response = ai_chat.send_chat(
             message=prompt,
             function_call="create_api",
@@ -138,7 +142,7 @@ class APIFunction:
         validate_json, data = openAIchat.validate_json_function_call(
             ai_response,
             "create_api",
-            ["endpoint", "imports"],
+            EndpointCreation,
         )
         if validate_json > 0:
             return 1, data

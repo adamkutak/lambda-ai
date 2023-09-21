@@ -80,8 +80,9 @@ class openAIchat:
     def validate_json_function_call(
         ai_response,
         expected_function,
-        expected_arguments,
+        function_class,
     ):
+        expected_arguments = function_class.__fields__.keys()
         if ai_response is None or ai_response.name != expected_function:
             return (
                 1,

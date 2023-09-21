@@ -1,69 +1,3 @@
-FUNCTION_CALLING_ENDPOINT_CREATION = {
-    "name": "create_api",
-    "description": "Create a new API endpoint and test it. If an error occurs during testing, the error will be returned to you.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "imports": {
-                "type": "string",
-                "description": "the python code to import the necessary requirements.",
-            },
-            "endpoint": {
-                "type": "string",
-                "description": "the python code for your FastAPI endpoint. It must include the decorator and function definition",
-            },
-        },
-        "required": ["imports", "endpoint"],
-    },
-}
-
-FUNCTION_CALLING_TEST_CREATION = {
-    "name": "add_test",
-    "description": "Create a new test case to be run on a FastAPI endpoint",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "input": {
-                "type": "object",
-                "description": "The test inputs. They should match the inputs of the endpoint described.",
-            },
-            "output": {
-                "type": "object",
-                "description": "The test outputs. Make sure they match the output types of the function description.",
-            },
-        },
-        "required": ["input", "output"],
-    },
-}
-
-FUNCTION_CALLING_TEST_CREATION_DB_EXT = {
-    "name": "add_test",
-    "description": "Create a new test case to be run on a FastAPI endpoint",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "input": {
-                "type": "object",
-                "description": "The test inputs. They should match the inputs of the endpoint described.",
-            },
-            "output": {
-                "type": "object",
-                "description": "The test outputs. Make sure they match the output types of the function description.",
-            },
-            "pre_sql": {
-                "type": "list",
-                "description": "A list of str, where each str is a valid SQL you wish to run before the function is tested.",
-            },
-            "post_sql": {
-                "type": "list",
-                "description": "A list of dicts, where each dict has two keys: sql, the sql to run to check the database after the test, and assert_value which is the value you expect your sql to return if the test is successful.",
-            },
-        },
-        "required": ["input", "output", "pre_sql", "post_sql"],
-    },
-}
-
-
 CREATE_ENDPOINT = """
 Your goal is to create a Python FastAPI API endpoint.
 It is essential that your function calls are valid JSON.
@@ -236,6 +170,9 @@ AUTO_TESTER_DATABASE_EXT = """
 This endpoint also uses a database. You must generate the SQL tests in coordination with the input/output test you generate.
 You do this by adding test rows with sql before the endpoint runs with the pre_sql list parameter.
 Then, after the endpoint runs, the post_sql sql will be run, and we will assert the output matches the assert_value.
+Use post_sql to verify that the database was updated or modified correctly when the function is tested with the inputs.
+Your function call of add_test should return the inputs, outputs, pre_sql, and post_sql. Do not forget to include any of those, they are all required.
+Be very cautious when inserting new rows. If doing so, use highly random primary_keys of at least 12 digits/characters.
 Here is an overview of the database:
 {database_info}
 """
@@ -248,8 +185,8 @@ Please retry.
 """
 
 AUTO_TESTER_ONESHOT_ARGS = {
-    "input": "{'item_id': 1, 'status': True, 'bought': 80}",
-    "output": "{'item_id': 1, 'quantity': 20}",
+    "input": {"item_id": 1, "status": True, "bought": 80},
+    "output": {"item_id": 1, "quantity": 20},
 }
 
 AUTO_TESTER_ONESHOT_PROMPT = """
@@ -264,4 +201,40 @@ quantity is 100. If status is true, deduct bought from quantity.
 
 For the test case, you must give inputs and outputs that test the endpoint works correctly.
 Do not create test cases that go outside the core functionality of the test case.
+"""
+
+AUTO_TESTER_WITH_DB_ONESHOT_ARGS = {
+    "input": {"item_id": 1, "status": True, "bought": 80},
+    "output": {"item_id": 1, "quantity": 20},
+}
+
+AUTO_TESTER_WITH_DB_ONESHOT_PROMPT = """
+You are an expert test case builder for FastAPI endpoints.
+You must use the "add_test" function given to you. Your function call must be valid JSON.
+You will create a new test case for the following endpoint, named sell_quantity:
+The inputs are: {'item_id': 'int', 'status': 'bool', 'bought': 'int'}
+The outputs are: {'cost': 'float'}
+
+This is the description of the endpoint:
+if status is true, sell the bought quantity of item_id from the database. Return the logarithm (base 10) of the cost of the purchase. Use the math library to do that.
+
+For the test case, you must give inputs and outputs that test the endpoint works correctly.
+Do not create test cases that go outside the core functionality of the test case.
+This endpoint also uses a database. You must generate the SQL tests in coordination with the input/output test you generate.
+You do this by adding test rows with sql before the endpoint runs with the pre_sql list parameter.
+Then, after the endpoint runs, the post_sql sql will be run, and we will assert the output matches the assert_value.
+Here is an overview of the database:
+Table Items has 4 columns:
+- item_id: INTEGER
+  - PRIMARY KEY constraint
+- name: VARCHAR(255)
+  - NOT NULL constraint
+- quantity: INTEGER
+  - NOT NULL constraint
+- price: FLOAT
+  - NOT NULL constraint
+Sample of Table Items rows:
+(300, 'Apple', 600, 3.59)
+(400, 'Pineapple', 15, 3.41)
+
 """
