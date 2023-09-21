@@ -15,8 +15,8 @@
 
 # TODO (generation improvement features):
 # Use Chain of thought reasoning for more complex functions. Break them down into smaller components
-# analyzing errors with a specialized AI instance?
-# ai has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
+# analyzing errors with a specialized AI instance? "explain what went wrong in this code with this error msg.
+# AI has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
 # - it tries to make highly compounded sql, which causes it to get things slightly wrong or miss a minor instruction
 
 # TODO (auto testing):
