@@ -154,7 +154,7 @@ cython_debug/
 
 # my own stuff
 .vscode/
-/generated_tests
-/generated_apis
-/generated_dbs
+/generated_tests/*
+/generated_apis/*
+/generated_dbs/*.db
 /venv
