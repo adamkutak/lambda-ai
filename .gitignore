@@ -154,7 +154,7 @@ cython_debug/
 
 # my own stuff
 .vscode/
-/generated_tests
-/generated_apis
-/generated_dbs
-/venv
+lambda-ai/generated_tests
+lambda-ai/generated_apis
+lambda-ai/generated_dbs
+lambda-ai/venv
