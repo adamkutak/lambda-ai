@@ -3,3 +3,5 @@ openai
 python-dotenv
 black
 uvicorn
+psycopg2
+sqlalchemy
