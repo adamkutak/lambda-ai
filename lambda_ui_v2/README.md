@@ -1,4 +1,4 @@
-# lambda_ui
+# lambda_ui_v2
 
 ## Project setup
 ```
