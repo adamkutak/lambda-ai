@@ -158,3 +158,4 @@ cython_debug/
 /generated_apis/*
 /generated_dbs/*.db
 /venv
+*/node_modules/*
