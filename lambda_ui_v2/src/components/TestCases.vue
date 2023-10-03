@@ -67,17 +67,17 @@ h2 {
 }
 
 .test-case-section h3 {
-    margin-bottom: 5px;
+    margin-bottom: 0px;
     /* Adjust this value to your liking */
 }
 
 .test-case-box {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 5px;
     margin-bottom: 15px;
     position: relative;
-    padding: 5px;
+    padding: 1px;
     border: 1px solid #e0e0e0;
     border-radius: 5px;
     background-color: #f9f9f9;
@@ -89,7 +89,7 @@ h2 {
 }
 
 .test-case-section {
-    padding: 5px;
+    padding: 1px;
 }
 
 .test-case-section:last-child {

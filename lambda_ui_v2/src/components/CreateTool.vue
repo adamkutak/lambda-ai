@@ -1,4 +1,4 @@
-<!-- TODO: add padding/margin at the bottom so the Create Tool button doesn't get pushed to the very bottom -->
+<!-- TODO: handle posting a new tool (an indicator to say the tell is being generated) -->
 
 <template>
     <div>
@@ -10,11 +10,11 @@
 
             <div class="inputs-outputs-container">
                 <div class="input-output-list">
-                    <div class="header">
-                        <h3>Inputs</h3>
-                        <button type="button" @click="addInput">+</button> <!-- Moved here -->
-                    </div>
                     <div class="scrollable-list"> <!-- This div will be scrollable -->
+                        <div class="header">
+                            <h3>Inputs</h3>
+                            <button type="button" @click="addInput">+</button> <!-- Moved here -->
+                        </div>
                         <div v-for="(input, index) in tool.inputs" :key="'input-' + index" class="input-output-entry">
                             <input v-model="input.key" placeholder="Input Name" required>
                             <select v-model="input.value">
@@ -22,14 +22,10 @@
                             </select>
                             <button type="button" @click="removeInput(index)">Remove</button>
                         </div>
-                    </div>
-                </div>
-                <div class="input-output-list">
-                    <div class="header">
-                        <h3>Outputs</h3>
-                        <button type="button" @click="addOutput">+</button> <!-- Moved here -->
-                    </div>
-                    <div class="scrollable-list"> <!-- This div will be scrollable -->
+                        <div class="header">
+                            <h3>Outputs</h3>
+                            <button type="button" @click="addOutput">+</button> <!-- Moved here -->
+                        </div>
                         <div v-for="(output, index) in tool.outputs" :key="'output-' + index" class="input-output-entry">
                             <input v-model="output.key" placeholder="Output Name" required>
                             <select v-model="output.value">
@@ -55,7 +51,14 @@
   
   
 <script>
+import axios from 'axios';
 export default {
+    props: {
+        testCases: {
+            type: Array,
+            default: () => []
+        }
+    },
     data() {
         return {
             tool: {
@@ -83,8 +86,26 @@ export default {
             this.tool.outputs.splice(index, 1);
         },
         submitForm() {
-            console.log("Tool submitted:", this.tool);
-            // TODO: Send 'this.tool' to your backend/API or perform other actions.
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
+                }
+            };
+            const new_api_data = {
+                tool: this.tool,
+                db: this.selectedDatabase,
+                testcases: this.testCases,
+            }
+
+            console.log(new_api_data);
+            axios.post(process.env.VUE_APP_BACKEND_URL + '/create_tool', new_api_data, config)
+                .then(response => {
+                    console.log(response.data);
+                })
+                .catch(error => {
+                    console.error('Error posting data:', error);
+                })
         }
     }
 }
@@ -97,7 +118,8 @@ form {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-width: 400px;
+    max-width: 380px;
+    min-width: 380px;
     /* Adjusted for compactness */
     margin: 0 auto;
     max-height: 90vh;
@@ -135,7 +157,8 @@ select {
 }
 
 .scrollable-list {
-    max-height: 150px;
+    height: 250px;
+    max-height: 250px;
     /* Adjust to your liking */
     overflow-y: auto;
     margin-bottom: 10px;

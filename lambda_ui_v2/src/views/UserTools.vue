@@ -1,7 +1,7 @@
 <template>
-    <div class="container">
-        <CreateTool ref="createToolRef" />
-        <TestCases :inputs="inputs" :outputs="outputs" />
+    <div class="card">
+        <CreateTool ref="createToolRef" :testCases="testCasesData" />
+        <TestCases ref="testCasesRef" :inputs="inputs" :outputs="outputs" />
     </div>
 </template>
   
@@ -17,7 +17,8 @@ export default {
     data() {
         return {
             inputs: [],
-            outputs: []
+            outputs: [],
+            testCasesData: []
         };
     },
     mounted() {
@@ -25,12 +26,16 @@ export default {
             this.inputs = this.$refs.createToolRef.tool.inputs;
             this.outputs = this.$refs.createToolRef.tool.outputs;
         }
+        if (this.$refs.testCasesRef) {
+            this.testCasesData = this.$refs.testCasesRef.testCases;
+        }
     }
 }
 </script>
+
   
 <style scoped>
-.container {
+.card {
     display: flex;
     gap: 20px;
     /* or whatever gap you'd like between the components */
