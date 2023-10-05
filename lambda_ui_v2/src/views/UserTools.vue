@@ -37,12 +37,26 @@ export default {
 <style scoped>
 .card {
     display: flex;
+    justify-content: center;
+    /* Centers child components horizontally */
+    align-items: flex-start;
+    /* Aligns child components to the top */
     gap: 20px;
-    /* or whatever gap you'd like between the components */
+    /* Gap between child components */
+    padding: 20px 0;
+    /* Padding at the top and bottom */
+    width: 100%;
+    max-width: 1200px;
+    /* Optional max-width for wider screens */
+    margin: 0 auto;
+    /* Centers the card on the page */
 }
 
 .CreateTool,
 .TestCases {
     flex: 1;
+    /* Each child takes up equal width */
+    max-width: calc(50% - 10px);
+    /* Optional: Ensures that with the gap, each child is not more than half the container width */
 }
 </style>

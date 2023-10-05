@@ -21,7 +21,7 @@
                             <td>{{ row.types.join(', ') }}</td>
                             <td><router-link :to="'/databases/' + row.id">View</router-link></td>
                         </tr>
-                        <tr v-if="row.isDetailRow" :key="'details-' + row.id">
+                        <tr v-if="row.isDetailRow" :key="'details-' + row.id" class="description-row">
                             <td colspan="4">{{ row.description }}</td>
                         </tr>
                     </template>
@@ -129,5 +129,9 @@ td:last-child {
     border: none;
     width: 1%;
     white-space: nowrap;
+}
+
+.description-row {
+    text-align: right;
 }
 </style>

@@ -1,16 +1,37 @@
 <template>
-    <div>
-        <h2>User Databases</h2>
-        <p>This is the user databases page. Add content or components here as needed.</p>
+    <div class="card">
+        <CreateDatabase ref="createDatabaseRef" />
     </div>
 </template>
-  
+
 <script>
+import CreateDatabase from '@/components/CreateDatabase.vue';
+
 export default {
-    name: 'UserDatabases'
+    components: {
+        CreateDatabase,
+    },
+    data() {
+        return {
+        };
+    },
 }
 </script>
-  
+
 <style scoped>
-/* Optional: Add any specific styles for the UserDatabases view here */
+.card {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 0;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.CreateDatabase {
+    flex: 1;
+    max-width: calc(50% - 10px);
+}
 </style>
