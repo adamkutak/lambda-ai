@@ -1,22 +1,22 @@
 import os
-from lambdaai.apis import APIFunction
-from lambdaai.environment import APIEnvironment, APIFile
-from lambdaai.gpt_management import openAIchat
-from lambdaai.prompts import (
+from .apis import APIFunction
+from .environment import APIEnvironment, APIFile
+from .gpt_management import openAIchat
+from .prompts import (
     AUTO_TESTER_DATABASE_EXT,
     AUTO_TESTER_ON_ERROR,
     AUTO_TESTER_ONESHOT_ARGS,
     AUTO_TESTER_ONESHOT_PROMPT,
     AUTO_TESTER_BUILD_PROMPT,
 )
-from lambdaai.gpt_function_calls import (
+from .gpt_function_calls import (
     FUNCTION_CALLING_TEST_CREATION,
     FUNCTION_CALLING_ENDPOINT_CREATION,
     FUNCTION_CALLING_TEST_CREATION_DB_EXT,
     FunctionCallTest,
     FunctionCallTestWithDB,
 )
-from lambdaai.utils import close_enough_float, execute_sql
+from .utils import close_enough_float, execute_sql
 
 AUTO_BUILD_TEST_CASE_COUNT = 3
 MAX_AUTO_BUILD_ATTEMPTS = 5

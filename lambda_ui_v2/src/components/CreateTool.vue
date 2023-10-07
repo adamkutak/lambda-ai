@@ -1,4 +1,4 @@
-<!-- TODO: handle posting a new tool (an indicator to say the tell is being generated) -->
+<!-- TODO: handle posting a new tool (an indicator to say the tool is being generated) -->
 
 <template>
     <div>
@@ -40,11 +40,19 @@
             <label for="toolDescription">Description:</label>
             <textarea id="toolDescription" v-model="tool.description" required></textarea>
             <label for="databaseSelect">Attach Database:</label>
-            <select id="databaseSelect" v-model="selectedDatabase">
+            <select id="databaseSelect" v-model="tool.selectedDatabase">
                 <option value="null" disabled selected>None</option>
                 <option v-for="db in databases" :key="db" :value="db">{{ db }}</option>
             </select>
-            <button type="submit">Create Tool</button>
+            <button v-if="!loading && !generate_error" type="submit">Create Tool</button>
+            <div v-else-if="loading">
+                <span>Generating...</span>
+                <!-- You can replace the following with your own spinner component or icon -->
+                <!-- <img src="path_to_spinner.gif" alt="Loading..." />  -->
+            </div>
+            <div v-else-if="generate_error">
+                <span style="color: red;">Error: Something went wrong</span>
+            </div>
         </form>
     </div>
 </template>
@@ -61,15 +69,17 @@ export default {
     },
     data() {
         return {
+            loading: false,
+            generate_error: false,
             tool: {
                 name: '',
                 inputs: [{ key: '', value: 'string' }],
                 outputs: [{ key: '', value: 'string' }],
-                description: ''
+                description: '',
+                selectedDatabase: null,
             },
             types: ['string', 'int', 'float', 'boolean'],
-            databases: [],
-            selectedDatabase: null,
+            databases: []
         };
     },
     methods: {
@@ -86,26 +96,34 @@ export default {
             this.tool.outputs.splice(index, 1);
         },
         submitForm() {
+            this.loading = true;  // <-- Start loading
+            this.generate_error = false;
+
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
                     // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
                 }
             };
-            const new_api_data = {
+            const new_tool_data = {
                 tool: this.tool,
-                db: this.selectedDatabase,
                 testcases: this.testCases,
             }
 
-            console.log(new_api_data);
-            axios.post(process.env.VUE_APP_BACKEND_URL + '/create_tool', new_api_data, config)
+            console.log(new_tool_data);
+            axios.post(process.env.VUE_APP_BACKEND_URL + '/create_tool', new_tool_data, config)
                 .then(response => {
                     console.log(response.data);
+                    this.generate_error = false;
+                    this.$router.push('/tools');  // <-- Redirect on success
                 })
                 .catch(error => {
                     console.error('Error posting data:', error);
+                    this.generate_error = true;
                 })
+                .finally(() => {
+                    this.loading = false;  // <-- Stop loading in any case (either success or error)
+                });
         }
     }
 }

@@ -2,7 +2,7 @@ import subprocess
 import requests
 import atexit
 from typing import Dict
-from lambdaai.utils import get_imports
+from .utils import get_imports
 
 
 TEST_FOLDER = "generated_tests"

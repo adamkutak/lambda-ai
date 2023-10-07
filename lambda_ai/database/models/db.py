@@ -2,6 +2,7 @@ from pydantic import ConfigDict
 from sqlalchemy import Column, Integer, String
 from lambda_ai.database.base import Base
 
+
 class DBModel(Base):
     __tablename__ = "databases"
 

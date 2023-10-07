@@ -2,6 +2,7 @@ from pydantic import ConfigDict
 from sqlalchemy import Column, Integer, String, Boolean, JSON, ForeignKey
 from lambda_ai.database.base import Base
 
+
 class APIFunctionModel(Base):
     __tablename__ = "api_functions"
 
@@ -15,7 +16,7 @@ class APIFunctionModel(Base):
     is_async = Column(Boolean)
     build_attempts = Column(JSON, default=[])
     api_function_created = Column(JSON, default={})
-    attached_db_id = Column(Integer, ForeignKey('databases.id'), nullable=True)
+    attached_db_id = Column(Integer, ForeignKey("databases.id"), nullable=True)
     force_use_db = Column(Boolean)
 
     model_config = ConfigDict(from_attributes=True)

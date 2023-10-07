@@ -1,5 +1,5 @@
-from lambdaai.environment import APIFile
-from lambdaai.prompts import (
+from .environment import APIFile
+from .prompts import (
     CREATE_ENDPOINT,
     CREATE_ENDPOINT_WITH_DB,
     ON_CREATE_ERROR,
@@ -8,13 +8,13 @@ from lambdaai.prompts import (
     ONE_SHOT_PROMPT_USER_WITH_DB,
     ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS,
 )
-from lambdaai.gpt_function_calls import (
+from .gpt_function_calls import (
     FUNCTION_CALLING_ENDPOINT_CREATION,
     EndpointCreation,
 )
-from lambdaai.utils import generate_fastapi_definition
-from lambdaai.gpt_management import openAIchat
-from lambdaai.db import DB
+from .utils import generate_fastapi_definition
+from .gpt_management import openAIchat
+from .db import DB
 
 MAX_TEST_ATTEMPTS = 5
 MAX_BUILD_ATTEMPTS = 3
@@ -46,7 +46,7 @@ class APIFunction:
         self.force_use_db = force_use_db
 
     def create_api_function(self) -> str:
-        from lambdaai.test_harness import TestHarness
+        from .test_harness import TestHarness
 
         if not self.test_cases:
             result_code, message = self.test_harness = TestHarness.build_auto_tester(
@@ -115,7 +115,7 @@ class APIFunction:
         )
 
         # process, validate, and test.
-        from lambdaai.test_harness import TestHarness
+        from .test_harness import TestHarness
 
         result_code = 1
         while result_code > 0 and self.build_attempts[-1] < MAX_TEST_ATTEMPTS:
