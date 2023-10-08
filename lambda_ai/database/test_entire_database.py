@@ -100,7 +100,6 @@ def test_create_db():
         # Check if the DB entry has been created
         assert db is not None
         assert db.name == "TestDB"
-        assert "/path/to/db/TestDB.db" in db.path
 
 
 def test_get_db():
@@ -115,7 +114,6 @@ def test_get_db():
         # Check if the retrieved DB entry matches the created one
         assert db is not None
         assert db.name == "SampleDB"
-        assert "/path/to/sample/SampleDB.db" in db.path
 
 
 def test_get_all_dbs():

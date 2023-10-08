@@ -8,7 +8,6 @@ class DBModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    path = Column(String)
-    test_db_path = Column(String)
+    location = Column(String)
 
     model_config = ConfigDict(from_attributes=True)

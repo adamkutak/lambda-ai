@@ -12,7 +12,6 @@ def generate_fastapi_definition(
     is_async: bool,
 ):
     # check that everything is validly named firstly.
-    breakpoint()
     assert name.isidentifier()
     assert path.replace("/", "").isidentifier()
     for input in inputs.keys():
