@@ -31,7 +31,11 @@ use GPT-4 eventually for far better performance.
 telemetry/logging of actions taken.
 
 AUTH BRANCH
-- Create a user model and user pydantic schema
-- Create a register method that takes a username and password and creates a user record
+- Create a user model and user pydantic schema ✅ NOQA
+- CRUD functions ✅ NOQA
+- /register API route
+    - creates new user and passes back a session ID to be used as Bearer
 - Pass back a session ID that gets stored against the user
-- Create an API route wrapper that extracts the session ID from the API
+- Create an API route wrapper that extracts the session ID from Bearer
+- Update other models to have a foreign key for user id
+- Update API routes to return data associated with authed user
