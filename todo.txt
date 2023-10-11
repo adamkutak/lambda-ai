@@ -45,5 +45,20 @@ Generating a function might sometimes take a while (over 30 seconds):
 Paths and such are a huge mess.
 
 Bug: I need to track which ports are live, servers need some way of ensuring they are on an open port at all times.
- - right now, there isn't even an easy way to undeploy the active env. That isn't a good solution anyway.
  - for now, I'll have a special port for testing.
+
+--------------------------------
+ General roadmap of features to add
+--------------------------------
+First iteration MVP:
+- Get Frontend calls to backend working
+- add user authentication/management
+- add landing page with login screen
+- figure out deployment (possible issues with core tech)
+- ?? ability to delete/undeploy things ??
+--------------------------------
+Second Iteration MVP:
+- refactor backend classes
+- improve generation features
+- additional UI views
+- ability to add external packages/APIs
