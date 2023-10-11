@@ -68,3 +68,10 @@ Second Iteration MVP:
 - ability to add external packages/APIs
 - queue cards in UI to see the status of a generating API tool.
   - otherwise, if the user leaves the page they can't see if an error occured
+
+
+AUTH BRANCH
+- Create a user model and user pydantic schema
+- Create a register method that takes a username and password and creates a user record
+- Pass back a session ID that gets stored against the user
+- Create an API route wrapper that extracts the session ID from the API
