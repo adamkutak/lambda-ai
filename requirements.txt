@@ -5,3 +5,4 @@ black
 uvicorn
 psycopg2
 sqlalchemy
+psutil

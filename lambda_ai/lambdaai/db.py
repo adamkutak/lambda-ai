@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DEFAULT_DB_PATH = "generated_dbs"
+DEFAULT_DB_PATH = "lambda_ai/generated_dbs"
 MAX_ROWS_TO_DISPLAY = 3
 
 
@@ -10,6 +10,7 @@ class DB:
         self,
         name,
         location: str = None,
+        replace_existing: bool = False,
     ):
         db_name = f"{name}.db"
 
@@ -19,13 +20,14 @@ class DB:
         self.test_db_path = location + "/test_dbs/" + db_name
         self.table_names = []
 
-        curr_dbs_at_path = os.listdir(location)
         # TODO: temporarily removing existing file for ease of use...
-        if db_name in curr_dbs_at_path:
-            os.remove(self.path)
-        curr_dbs_at_test_path = os.listdir(location + "/test_dbs")
-        if db_name in curr_dbs_at_test_path:
-            os.remove(self.test_db_path)
+        if replace_existing:
+            curr_dbs_at_path = os.listdir(location)
+            if db_name in curr_dbs_at_path:
+                os.remove(self.path)
+            curr_dbs_at_test_path = os.listdir(location + "/test_dbs")
+            if db_name in curr_dbs_at_test_path:
+                os.remove(self.test_db_path)
 
     def add_table(
         self,

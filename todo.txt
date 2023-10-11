@@ -29,3 +29,21 @@ Build a tool that lets you upload external interface documentation with the nece
 - Generated functions can then incorporate these API's
 use GPT-4 eventually for far better performance.
 telemetry/logging of actions taken.
+
+TODO (backend service):
+Return schemas of the database instead of the database object,
+    - Then, get rid of classes for the core tech. Convert the functions so that they 
+      accept the schema of the database object instead. They don't need to be class functions anymore.
+
+Generating a function might sometimes take a while (over 30 seconds):
+  - user might get bored and change pages. 
+  - we need to think of generating a function as a potential longrunning task
+    that happens in the background. The new tool should popup once it is complete.
+  - would be really nice to have a queue of functions being generated on the UI, 
+    so the user knows where it is
+  
+Paths and such are a huge mess.
+
+Bug: I need to track which ports are live, servers need some way of ensuring they are on an open port at all times.
+ - right now, there isn't even an easy way to undeploy the active env. That isn't a good solution anyway.
+ - for now, I'll have a special port for testing.
