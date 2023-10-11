@@ -29,3 +29,9 @@ Build a tool that lets you upload external interface documentation with the nece
 - Generated functions can then incorporate these API's
 use GPT-4 eventually for far better performance.
 telemetry/logging of actions taken.
+
+AUTH BRANCH
+- Create a user model and user pydantic schema
+- Create a register method that takes a username and password and creates a user record
+- Pass back a session ID that gets stored against the user
+- Create an API route wrapper that extracts the session ID from the API
