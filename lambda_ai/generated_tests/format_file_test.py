@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Request
-from typing import Dict, Any
 from fastapi.responses import JSONResponse
+from typing import Dict, Any
+from fastapi import FastAPI, Request
 
 
 app = FastAPI()

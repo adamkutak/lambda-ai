@@ -160,7 +160,6 @@ def create_tool(request: CreateToolRequest):
             server_process_id=master_env.server_process_id,
         )
 
-        breakpoint()
         if api_env.is_live:
             api_env.undeploy()
         api_env.deploy()
@@ -297,7 +296,7 @@ def get_databases():
                 {
                     "id": db.id,
                     "name": db.name,
-                    "columns": tables_list,
+                    "tables": tables_list,
                 }
             )
 
