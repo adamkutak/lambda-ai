@@ -13,6 +13,7 @@ from lambda_ai.database.crud.api_container import (
 )
 from lambda_ai.database.crud.api_function import (
     create_api_function,
+    delete_api_function,
     get_api_function,
     get_api_functions,
     update_api_function,
@@ -75,6 +76,7 @@ def create_tool(request: CreateToolRequest):
 
     with db_session() as session:
         api_function_obj = create_api_function(session, new_function)
+        api_obj_id = api_function_obj.id
 
     if request.tool.selectedDatabase:
         with db_session() as session:
@@ -106,6 +108,8 @@ def create_tool(request: CreateToolRequest):
     result_code, message = new_api_function.create_api_function()
     if result_code > 1:
         print(message)
+        with db_session():
+            delete_api_function(session, api_obj_id)
         raise HTTPException(status_code=500, detail=f"Failed to build tool: {message}")
 
     api_function_created = {
@@ -113,7 +117,7 @@ def create_tool(request: CreateToolRequest):
     }
 
     with db_session() as session:
-        update_api_function(session, api_function_obj.id, **api_function_created)
+        update_api_function(session, api_obj_id, **api_function_created)
 
     # the following code is a collosal mess. Will fix this soon.
     # FIXME: for now, we just attach it to the first apienv in the database.
@@ -208,7 +212,14 @@ def create_tool(request: CreateToolRequest):
         with db_session() as session:
             create_api_environment(session, env_schema)
 
-    return {"message": "success"}
+    new_api_function_return = {
+        "id": api_obj_id,
+        "name": new_api_function.name,
+        "inputs": new_api_function.inputs,
+        "outputs": new_api_function.outputs,
+        "description": new_api_function.functionality,
+    }
+    return {"tool": new_api_function_return}
 
 
 @app.post("/create_database")
@@ -228,7 +239,6 @@ def create_table(request: CreateTableRequest):
         db = DB(name=db_obj.name, location=db_obj.location, replace_existing=True)
 
     # transform the columns because TableCreate takes a dict of columns
-    columns = [column.model_dump() for column in request.columns]
     transform_columns = {}
     for column in request.columns:
         transform_column = column.model_dump()
@@ -253,7 +263,14 @@ def create_table(request: CreateTableRequest):
         table_obj = create_db_table(session, table_create)
         db.add_table(table_obj.name, table_obj.columns)
 
-    return {"message": "success"}
+    new_table_return = {
+        "id": db_id,  # temporary 1-1 relationship for db-table
+        "name": table_obj.name,
+        "columns": transform_columns,
+        "description": table_obj.description,
+    }
+
+    return {"table": new_table_return}
 
 
 @app.get("/get_tools")
@@ -269,6 +286,7 @@ def get_tools():
                 "name": tool.name,
                 "inputs": tool.inputs,
                 "outputs": tool.outputs,
+                "description": tool.functionality,
             }
         )
 
@@ -301,6 +319,30 @@ def get_databases():
             )
 
     return {"databases": dbs_list}
+
+
+# this is a temporary function to get all the tables
+# in the future, tables in the UI will be part of a database
+@app.get("/get_tables")
+def get_tables():
+    with db_session() as session:
+        dbs = get_all_dbs(session)
+
+        master_tables_list = []
+        for db in dbs:
+            tables = get_all_tables_by_db(session, db.id)
+            tables_list = [
+                {
+                    "id": db.id,  # temporary 1-1 relation db-table
+                    "name": table.name,
+                    "description": table.description,
+                    "columns": table.columns,
+                }
+                for table in tables
+            ]
+            master_tables_list.extend(tables_list)
+
+    return {"tables": master_tables_list}
 
 
 @app.post("/query_tool")

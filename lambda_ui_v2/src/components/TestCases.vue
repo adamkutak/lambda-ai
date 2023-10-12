@@ -8,7 +8,7 @@
                 <h3>Inputs</h3>
                 <div v-for="input in inputs" :key="input.key" class="field">
                     <label :for="'input-' + input.key + '-' + index" class="field-label">{{ input.key }}</label>
-                    <input :id="'input-' + input.key + '-' + index" v-model="testCase[input.key]" />
+                    <input :id="'input-' + input.key + '-' + index" v-model="testCase.inputs[input.key]" />
                 </div>
             </div>
 
@@ -17,7 +17,7 @@
                 <h3>Outputs</h3>
                 <div v-for="output in outputs" :key="output.key" class="field">
                     <label :for="'output-' + output.key + '-' + index" class="field-label">{{ output.key }}</label>
-                    <input :id="'output-' + output.key + '-' + index" v-model="testCase[output.key]" />
+                    <input :id="'output-' + output.key + '-' + index" v-model="testCase.outputs[output.key]" />
                 </div>
             </div>
 
@@ -27,7 +27,6 @@
         <button @click="addTestCase" class="add-btn">+</button>
     </div>
 </template>
-
   
 <script>
 export default {
@@ -37,7 +36,7 @@ export default {
             testCases: []
         };
     },
-    created() {
+    mounted() {
         // Fill two initial test cases with input/output keys
         for (let i = 0; i < 2; i++) {
             this.addTestCase();
@@ -45,14 +44,17 @@ export default {
     },
     methods: {
         addTestCase() {
-            const newTestCase = {};
+            const inputs = {};
             for (const input of this.inputs) {
-                newTestCase[input.key] = "";
+                inputs[input.key] = "";
             }
+            
+            const outputs = {};
             for (const output of this.outputs) {
-                newTestCase[output.key] = "";
+                outputs[output.key] = "";
             }
-            this.testCases.push(newTestCase);
+            
+            this.testCases.push({ inputs, outputs });
         },
         removeTestCase(index) {
             this.testCases.splice(index, 1);

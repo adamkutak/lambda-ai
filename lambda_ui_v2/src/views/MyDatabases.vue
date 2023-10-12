@@ -14,15 +14,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <template v-for="row in tableRows">
-                        <tr @click="toggleDetails(row.id)" v-if="!row.isDetailRow" :key="row.id">
-                            <td>{{ row.name }}</td>
-                            <td>{{ row.columns.join(', ') }}</td>
-                            <td>{{ row.types.join(', ') }}</td>
-                            <td><router-link :to="'/databases/' + row.id">View</router-link></td>
+                    <template v-for="database in databases" :key="database.id">
+                        <tr @click="toggleDetails(database.id)">
+                            <td>{{ database.name }}</td>
+                            <td>{{ Object.keys(database.columns).join(', ') }}</td>
+                            <td>{{ Object.values(database.columns).map(col => col.type).join(', ') }}</td>
+                            <td><router-link :to="'/databases/' + database.id">View</router-link></td>
                         </tr>
-                        <tr v-if="row.isDetailRow" :key="'details-' + row.id" class="description-row">
-                            <td colspan="4">{{ row.description }}</td>
+                        <tr v-if="database.showDetails" :key="'details-' + database.id" class="description-row">
+                            <td colspan="4">{{ database.description }}</td>
                         </tr>
                     </template>
                 </tbody>
@@ -32,40 +32,12 @@
 </template>
 
 <script>
+import GlobalState from '@/globalState.js';
 export default {
     data() {
         return {
-            databases: [
-                {
-                    id: 1,
-                    name: "Database 1",
-                    columns: ["column1", "column2"],
-                    types: ["type1", "type2"],
-                    description: "This is a description for Database 1.",
-                    showDetails: false
-                },
-                {
-                    id: 2,
-                    name: "Database 2",
-                    columns: ["column10", "column200"],
-                    types: ["type10", "type200"],
-                    description: "My new database has different structures.",
-                    showDetails: false
-                },
-            ]
+            databases: GlobalState.state.databases
         };
-    },
-    computed: {
-        tableRows() {
-            const rows = [];
-            this.databases.forEach(database => {
-                rows.push(database);
-                if (database.showDetails) {
-                    rows.push({ ...database, isDetailRow: true });
-                }
-            });
-            return rows;
-        }
     },
     methods: {
         toggleDetails(id) {

@@ -60,6 +60,7 @@
   
 <script>
 import axios from 'axios';
+import GlobalState from '@/globalState.js';
 export default {
     props: {
         testCases: {
@@ -96,7 +97,7 @@ export default {
             this.tool.outputs.splice(index, 1);
         },
         submitForm() {
-            this.loading = true;  // <-- Start loading
+            this.loading = true;
             this.generate_error = false;
 
             const config = {
@@ -105,16 +106,45 @@ export default {
                     // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
                 }
             };
+
+            // Convert inputs and outputs list to dictionary
+            // it would be great to have this be the original form of the data, instead of having to convert it.
+            const inputsDict = this.tool.inputs.reduce((acc, curr) => {
+                acc[curr.key] = curr.value;
+                return acc;
+            }, {});
+
+            const outputsDict = this.tool.outputs.reduce((acc, curr) => {
+                acc[curr.key] = curr.value;
+                return acc;
+            }, {});
+
+            // Adjust the testCases to match the Pydantic model
+            console.log(this.testCases)
+            const formattedTestCases = this.testCases.map(tc => ({
+                input: tc.inputs,
+                output: tc.outputs
+            }));
+            console.log(formattedTestCases)
+
+
+            // Prepare the final data payload
             const new_tool_data = {
-                tool: this.tool,
-                testcases: this.testCases,
-            }
+                tool: {
+                    ...this.tool,
+                    inputs: inputsDict,
+                    outputs: outputsDict
+                },
+                testcases: formattedTestCases
+            };
 
             console.log(new_tool_data);
+
             axios.post(process.env.VUE_APP_BACKEND_URL + '/create_tool', new_tool_data, config)
                 .then(response => {
                     console.log(response.data);
                     this.generate_error = false;
+                    GlobalState.addTool(response.data.tool)
                     this.$router.push('/tools');  // <-- Redirect on success
                 })
                 .catch(error => {

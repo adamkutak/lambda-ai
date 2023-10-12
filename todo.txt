@@ -52,9 +52,12 @@ Bug: I need to track which ports are live, servers need some way of ensuring the
 --------------------------------
 First iteration MVP:
 - Get Frontend calls to backend working
+- name slugging for user inputs
 - add user authentication/management
 - add landing page with login screen
 - figure out deployment (possible issues with core tech)
+- user can't test SQL in UI
+- user can't even add data to the table without generating a function
 - ?? ability to delete/undeploy things ??
 --------------------------------
 Second Iteration MVP:
@@ -62,3 +65,5 @@ Second Iteration MVP:
 - improve generation features
 - additional UI views
 - ability to add external packages/APIs
+- queue cards in UI to see the status of a generating API tool.
+  - otherwise, if the user leaves the page they can't see if an error occured
