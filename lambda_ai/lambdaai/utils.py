@@ -1,5 +1,7 @@
 import math
 import sqlite3
+import hashlib
+import datetime
 
 SAFE_NAME_CHARACTERS = "/_"
 
@@ -77,3 +79,12 @@ def execute_sql(db_path: str, sql: str):
     connection.commit()
     connection.close()
     return result
+
+
+def unsafe_session_id(rand_str: str):
+    timestamp_str = str(datetime.datetime.timestamp())
+
+    data = (timestamp_str + rand_str).encode()
+    hash = hashlib.sha256(data).hexdigest()
+
+    return hash
