@@ -73,6 +73,7 @@ Second Iteration MVP:
 AUTH BRANCH
 - Create a user model and user pydantic schema ✅ NOQA
 - CRUD functions ✅ NOQA
+- Add session ID to model & crud
 - /register API route
     - creates new user and passes back a session ID to be used as Bearer
 - Pass back a session ID that gets stored against the user

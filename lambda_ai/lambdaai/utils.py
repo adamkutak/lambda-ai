@@ -1,6 +1,8 @@
 import math
 import sqlite3
 import re
+import hashlib
+import datetime
 
 SAFE_NAME_CHARACTERS = "/_"
 
@@ -87,3 +89,12 @@ def generate_slug(name: str) -> str:
     slug = re.sub(r"_+", "_", slug)
 
     return slug
+
+
+def unsafe_session_id(rand_str: str):
+    timestamp_str = str(datetime.datetime.timestamp())
+
+    data = (timestamp_str + rand_str).encode()
+    hash = hashlib.sha256(data).hexdigest()
+
+    return hash

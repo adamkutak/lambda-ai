@@ -1,11 +1,15 @@
 from sqlalchemy.orm import Session
 from models.user import UserModel
 from schemas.user import CreateUser, User
+from lambdaai.utils import unsafe_session_id
 
 
 def create_user(db: Session, user: CreateUser):
+    # generate session ID
+    session_id = unsafe_session_id(user.first_name)  # TODO: Update with safe session ID
+
     # create a user
-    new_user = UserModel(**user.model_dump())
+    new_user = UserModel(**user.model_dump(), session_id=session_id)
 
     # insert into database
     db.add(new_user)
