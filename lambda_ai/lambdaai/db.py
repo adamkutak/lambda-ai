@@ -4,6 +4,13 @@ import os
 DEFAULT_DB_PATH = "lambda_ai/generated_dbs"
 MAX_ROWS_TO_DISPLAY = 3
 
+SQL_type_conversion = {
+    "str": "VARCHAR(255)",
+    "int": "INTEGER",
+    "float": "FLOAT",
+    "bool": "BOOL",
+}
+
 
 class DB:
     def __init__(
@@ -43,7 +50,7 @@ class DB:
         create_table_sql = f"CREATE TABLE {name} ("
 
         for col_name, col_info in columns.items():
-            col_type = col_info["type"]
+            col_type = SQL_type_conversion[col_info["type"]]
             col_constraints = " ".join(col_info["constraints"])
             create_table_sql += f"{col_name} {col_type} {col_constraints}, "
 

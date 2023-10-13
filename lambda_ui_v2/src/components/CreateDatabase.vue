@@ -66,7 +66,7 @@ export default {
                 description: '',
                 columns: [{ name: '', type: 'int', primaryKey: false, unique: false }]
             },
-            types: ['int', 'string', 'float', 'boolean']
+            types: ['int', 'str', 'float', 'bool']
         };
     },
     methods: {

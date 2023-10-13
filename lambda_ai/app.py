@@ -54,6 +54,7 @@ app.add_middleware(
 
 @app.post("/create_tool")
 def create_tool(request: CreateToolRequest):
+    breakpoint()
     # FIXME: paths are a mess
     # how do we define path: user-id + function name?
     fake_user_id = "/xyz_123_abc_789"

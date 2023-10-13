@@ -74,24 +74,24 @@ export default {
             generate_error: false,
             tool: {
                 name: '',
-                inputs: [{ key: '', value: 'string' }],
-                outputs: [{ key: '', value: 'string' }],
+                inputs: [{ key: '', value: 'str' }],
+                outputs: [{ key: '', value: 'str' }],
                 description: '',
                 selectedDatabase: null,
             },
-            types: ['string', 'int', 'float', 'boolean'],
+            types: ['str', 'int', 'float', 'bool'],
             databases: []
         };
     },
     methods: {
         addInput() {
-            this.tool.inputs.push({ key: '', value: 'string' });
+            this.tool.inputs.push({ key: '', value: 'str' });
         },
         removeInput(index) {
             this.tool.inputs.splice(index, 1);
         },
         addOutput() {
-            this.tool.outputs.push({ key: '', value: 'string' });
+            this.tool.outputs.push({ key: '', value: 'str' });
         },
         removeOutput(index) {
             this.tool.outputs.splice(index, 1);
