@@ -57,7 +57,6 @@ First iteration MVP:
 - add landing page with login screen
 - figure out deployment (possible issues with core tech)
 - user can't test SQL in UI
-- user can't even add data to the table without generating a function
 - ?? ability to delete/undeploy things ??
 --------------------------------
 Second Iteration MVP:
