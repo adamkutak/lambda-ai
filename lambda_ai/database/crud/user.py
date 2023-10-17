@@ -1,10 +1,10 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, 
 from models.user import UserModel
 from schemas.user import CreateUser, User
 from lambdaai.utils import unsafe_session_id
 
 
-def create_user(db: Session, user: CreateUser):
+def create_user(db: Session, user: CreateUser) -> User:
     # generate session ID
     session_id = unsafe_session_id(user.first_name)  # TODO: Update with safe session ID
 
@@ -19,6 +19,18 @@ def create_user(db: Session, user: CreateUser):
     db.refresh(new_user)
 
     return new_user
+
+
+def get_user_from_session(db: Session, session_id: str):
+    user = db.query(UserModel).filter(UserModel.session_id == session_id).first()
+
+    return user
+
+
+def get_user_from_email(db: Session, email: str):
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+
+    return user
 
 
 def get_user(db: Session, user_id: int) -> User:

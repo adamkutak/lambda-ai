@@ -1,16 +1,8 @@
-import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from lambda_ai.api_models import CreateTableRequest, CreateToolRequest, QueryToolRequest
-from lambda_ai.database.crud.api_container import (
-    create_api_environment,
-    create_api_file,
-    get_all_api_environments,
-    get_api_file,
-    update_api_environment,
-    update_api_file,
-)
+from lambda_ai.api_models import CreateToolRequest
 from lambda_ai.database.crud.api_function import (
     create_api_function,
     delete_api_function,
@@ -21,8 +13,6 @@ from lambda_ai.database.crud.api_function import (
 from lambda_ai.database.crud.db import create_db, get_all_dbs, get_db
 from lambda_ai.database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
 from lambda_ai.database.schemas.api_function import APIFunctionCreate
-from lambda_ai.database.schemas.db import DBCreate
-from lambda_ai.database.schemas.table import TableCreate
 from lambda_ai.lambdaai.apis import APIFunction
 from lambda_ai.database.main import db_session
 from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
@@ -382,3 +372,60 @@ def query_tool(request: QueryToolRequest):
         return {"output": response.json()}
     else:
         return {"error": e}
+
+
+@app.post("/register")
+def register(request: CreateUser):
+    # create new user in database
+    with db_session() as db:
+        new_user = create_user(db=db, user=request)
+
+    new_user_return = {
+        "first_name": new_user.first_name,
+        "last_name": new_user.last_name,
+        "email": new_user.email,
+        "id": new_user.id,
+    }
+
+    response = JSONResponse(new_user_return)
+
+    # Pass back session ID as a cookie for browser to store
+    session_id = new_user.session_id
+    response.set_cookie(  # TODO: Add safety params for prod environment
+        key="session_id",
+        value=session_id,
+        path="/",
+        # secure=True,
+        # httponly=True,
+        # samesite='strict'
+    )
+
+    return response
+
+
+@app.get("/login")
+def login(request: LoginRequest, bearer_token: Annotated[str | None, Header()] = None):
+    with db_session() as db:
+        user = get_user_from_email(db=db, email=LoginRequest.email)
+
+    user_return = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "id": user.id,
+    }
+
+    response = JSONResponse(user_return)
+
+    if not bearer_token:
+        session_id = user.session_id
+        response.set_cookie(  # TODO: Add safety params for prod environment
+            key="session_id",
+            value=session_id,
+            path="/",
+            # secure=True,
+            # httponly=True,
+            # samesite='strict'
+        )
+
+    return response
