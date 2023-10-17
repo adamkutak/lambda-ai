@@ -23,6 +23,7 @@ class APIEnvironment(APIEnvironmentBase):
 
 class APIFileBase(BaseModel):
     name: str
+    slug_name: str
     file_path: str
     functions: dict = {}
     attach_db: bool = False

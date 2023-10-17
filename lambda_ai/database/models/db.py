@@ -8,6 +8,7 @@ class DBModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    slug_name = Column(String, unique=True, index=True)
     location = Column(String)
 
     model_config = ConfigDict(from_attributes=True)

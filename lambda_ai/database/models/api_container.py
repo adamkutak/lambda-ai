@@ -7,6 +7,7 @@ class APIFileModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    slug_name = Column(String, unique=True, index=True)
     file_path = Column(String, unique=True, index=True)
     functions = Column(JSON, default={})
     attach_db = Column(Boolean, default=False)

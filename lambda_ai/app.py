@@ -34,8 +34,10 @@ from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
 from dotenv import load_dotenv
 import openai
 
+from lambda_ai.lambdaai.utils import generate_slug
 
-# this function is for running things on app startup.
+
+# running on app startup.
 def onstartup():
     load_dotenv()
     openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -54,17 +56,18 @@ app.add_middleware(
 
 @app.post("/create_tool")
 def create_tool(request: CreateToolRequest):
-    breakpoint()
     # FIXME: paths are a mess
     # how do we define path: user-id + function name?
     fake_user_id = "/xyz_123_abc_789"
-    built_path = fake_user_id + "/" + request.tool.name
+    slug_name = generate_slug(request.tool.name)
+    built_path = fake_user_id + "/" + slug_name
 
     testcases = [testcase.model_dump() for testcase in request.testcases]
 
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
         name=request.tool.name,
+        slug_name=slug_name,
         path=built_path,
         inputs=dict(request.tool.inputs),
         outputs=dict(request.tool.outputs),
@@ -83,7 +86,7 @@ def create_tool(request: CreateToolRequest):
         with db_session() as session:
             db_obj = get_db(session, request.tool.selectedDatabase)
             if db_obj:
-                attached_db = DB(name=db_obj.name, location=db_obj.location)
+                attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
             else:
                 print("Attempted to attach a database that was not found")
                 raise HTTPException(
@@ -95,7 +98,7 @@ def create_tool(request: CreateToolRequest):
 
     # now we try to generate the API function.
     new_api_function = APIFunction(
-        name=request.tool.name,
+        name=new_function.slug_name,
         path=built_path,
         inputs=dict(request.tool.inputs),
         outputs=dict(request.tool.outputs),
@@ -134,7 +137,7 @@ def create_tool(request: CreateToolRequest):
         with db_session() as session:
             master_file = get_api_file(session, master_env.api_file_id)
         api_file = APIFile(
-            master_file.name,
+            master_file.slug_name,
             master_file.file_path,
             master_file.attach_db or attached_db is not None,
             pulling_old=True,
@@ -195,6 +198,7 @@ def create_tool(request: CreateToolRequest):
 
         api_schema = APIFileCreate(
             name=api_file.name,
+            slug_name=generate_slug(api_file.name),
             file_path=api_file.file_path,
             functions=transformed_function,
             attach_db=attached_db is not None,
@@ -225,7 +229,11 @@ def create_tool(request: CreateToolRequest):
 
 @app.post("/create_database")
 def create_database(request: CreateTableRequest):
-    new_database = DBCreate(name=request.name, location=DEFAULT_DB_PATH)
+    new_database = DBCreate(
+        name=request.name,
+        slug_name=generate_slug(request.name),
+        location=DEFAULT_DB_PATH,
+    )
     with db_session() as session:
         db_obj = create_db(session, new_database)
         return db_obj.id
@@ -237,7 +245,7 @@ def create_table(request: CreateTableRequest):
     db_id = create_database(request)
     with db_session() as session:
         db_obj = get_db(session, db_id)
-        db = DB(name=db_obj.name, location=db_obj.location, replace_existing=True)
+        db = DB(name=db_obj.slug_name, location=db_obj.location, replace_existing=True)
 
     # transform the columns because TableCreate takes a dict of columns
     transform_columns = {}
@@ -256,6 +264,7 @@ def create_table(request: CreateTableRequest):
 
     table_create = TableCreate(
         name=request.name,
+        slug_name=generate_slug(request.name),
         description=request.description,
         columns=transform_columns,
         db_id=db_id,
@@ -355,7 +364,10 @@ def query_tool(request: QueryToolRequest):
     # FIXME: the following code is awful. This is a dummy api_file that
     # we have to create so that we can instantiate the APIEnv.
     api_file = APIFile(
-        master_file.name, master_file.file_path, master_file.attach_db, pulling_old=True
+        master_file.slug_name,
+        master_file.file_path,
+        master_file.attach_db,
+        pulling_old=True,
     )
     api_env = APIEnvironment(
         api_file, master_env.host, master_env.port, master_env.is_live

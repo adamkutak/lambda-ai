@@ -17,7 +17,9 @@ TODO (generation improvement features):
 Use Chain of thought reasoning for more complex functions. Break them down into smaller components
 analyzing errors with a specialized AI instance? "explain what went wrong in this code with this error msg.
 AI has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
-- it tries to make highly compounded sql, which causes it to get things slightly wrong or miss a minor instruction
+  - it tries to make highly compounded sql, which causes it to get things slightly wrong or miss a minor instruction
+If the user is generating functions frequently with the same database, we could also add few-shot prompts of the past openai calls that worked correctly.
+     - then, future output would be more likely to be correct. 
 
 TODO (auto testing):
 although we implemented a base version, it doesn't really work.
@@ -51,8 +53,8 @@ Bug: I need to track which ports are live, servers need some way of ensuring the
  General roadmap of features to add
 --------------------------------
 First iteration MVP:
-- Get Frontend calls to backend working
-- name slugging for user inputs
+- Get Frontend calls to backend working (DONE)
+- name slugging for user inputs (DONE)
 - add user authentication/management
 - add landing page with login screen
 - figure out deployment (possible issues with core tech)
