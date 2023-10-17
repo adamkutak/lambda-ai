@@ -1,8 +1,27 @@
-from fastapi import FastAPI, HTTPException
+import os
+import openai
+from dotenv import load_dotenv
+from typing import Annotated
+
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from lambda_ai.api_models import CreateToolRequest
+from lambda_ai.api_models import (
+    CreateTableRequest,
+    CreateToolRequest,
+    QueryToolRequest,
+    LoginRequest,
+)
+
+from lambda_ai.database.crud.api_container import (
+    create_api_environment,
+    create_api_file,
+    get_all_api_environments,
+    get_api_file,
+    update_api_environment,
+    update_api_file,
+)
 from lambda_ai.database.crud.api_function import (
     create_api_function,
     delete_api_function,
@@ -11,18 +30,23 @@ from lambda_ai.database.crud.api_function import (
     update_api_function,
 )
 from lambda_ai.database.crud.db import create_db, get_all_dbs, get_db
-from lambda_ai.database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
-from lambda_ai.database.schemas.api_function import APIFunctionCreate
-from lambda_ai.lambdaai.apis import APIFunction
-from lambda_ai.database.main import db_session
-from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
 from lambda_ai.database.crud.table import (
     create_table as create_db_table,
     get_all_tables_by_db,
 )
+from lambda_ai.database.crud.user import create_user, get_user_from_email
+
+from lambda_ai.database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
+from lambda_ai.database.schemas.api_function import APIFunctionCreate
+from lambda_ai.database.schemas.db import DBCreate
+from lambda_ai.database.schemas.table import TableCreate
+from lambda_ai.database.schemas.user import CreateUser
+
+from lambda_ai.lambdaai.apis import APIFunction
+from lambda_ai.database.main import db_session
+from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
 from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
-from dotenv import load_dotenv
-import openai
+
 
 from lambda_ai.lambdaai.utils import generate_slug
 

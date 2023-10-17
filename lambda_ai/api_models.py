@@ -21,7 +21,6 @@ class CreateToolRequest(BaseModel):
     testcases: List[TestCase]
 
 
-<<<<<<< HEAD
 class TableColumns(BaseModel):
     name: str
     type: str
@@ -38,11 +37,11 @@ class CreateTableRequest(BaseModel):
 class QueryToolRequest(BaseModel):
     id: int
     inputs: dict
-=======
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str
->>>>>>> d15afde (register + login api routes)
 
 
 # print(json.dumps(CreateToolRequest.model_json_schema(), indent=2))
