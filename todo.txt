@@ -68,20 +68,10 @@ Second Iteration MVP:
 - ability to add external packages/APIs
 - queue cards in UI to see the status of a generating API tool.
   - otherwise, if the user leaves the page they can't see if an error occured
-
-
-AUTH BRANCH
-- Create a user model and user pydantic schema ✅ NOQA
-- CRUD functions ✅ NOQA
-- Add session ID to model & crud ✅ QA
-- /register and /login API route ✅ QA
-- Update other models to have a foreign key for user id ✅ QA
-  [✅] APIFunctionModel
-  [✅] DBModel
-  [✅] Environments
-- update FastAPI routes to extract bearer token ✅ QA
-- check for bearer token for fast-tracked login in /login route ✅ QA
-
-
-
-
+--------------------------------
+Other Features:
+- create table from excel/csv
+- download table as excel/csv
+- modify table (add columns)
+- perform operation on table without functions
+- create new function by modifying existing function

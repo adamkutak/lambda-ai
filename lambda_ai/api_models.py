@@ -11,9 +11,15 @@ class Tool(BaseModel):
     selectedDatabase: Optional[int] = None
 
 
+class TestCaseSQLCheck(BaseModel):
+    dbTestRow: str
+    dbPostTestCheck: str
+
+
 class TestCase(BaseModel):
     input: Dict[str, Any]
     output: Dict[str, Any]
+    sqltest: Optional[TestCaseSQLCheck] = None
 
 
 class CreateToolRequest(BaseModel):
