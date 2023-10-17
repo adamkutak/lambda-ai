@@ -60,6 +60,7 @@ First iteration MVP:
 - figure out deployment (possible issues with core tech)
 - user can't test SQL in UI
 - ?? ability to delete/undeploy things ??
+- simple admin console to view database
 --------------------------------
 Second Iteration MVP:
 - refactor backend classes
