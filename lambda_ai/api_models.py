@@ -21,4 +21,9 @@ class CreateToolRequest(BaseModel):
     testcases: List[TestCase]
 
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 # print(json.dumps(CreateToolRequest.model_json_schema(), indent=2))

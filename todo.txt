@@ -33,10 +33,13 @@ telemetry/logging of actions taken.
 AUTH BRANCH
 - Create a user model and user pydantic schema ✅ NOQA
 - CRUD functions ✅ NOQA
-- Add session ID to model & crud
-- /register API route
+- Add session ID to model & crud ✅ NOQA
+- /register API route ✅ NOQA
     - creates new user and passes back a session ID to be used as Bearer
-- Pass back a session ID that gets stored against the user
-- Create an API route wrapper that extracts the session ID from Bearer
+- Create AuthManager that takes in a bearer token and returns an authed user
+- update FastAPI routes to extract bearer token and pass to AuthManager (https://fastapi.tiangolo.com/tutorial/header-params/)
 - Update other models to have a foreign key for user id
 - Update API routes to return data associated with authed user
+
+Small fixes found:
+- api_models.py should be called api_schemas.py [Oct 17th]

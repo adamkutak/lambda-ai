@@ -1,13 +1,22 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from typing import Annotated
 
-from lambda_ai.api_models import CreateToolRequest
+from fastapi import FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from lambda_ai.api_models import CreateToolRequest, LoginRequest
 from lambda_ai.database.crud.api_function import (
     create_api_function,
     update_api_function,
 )
 from lambda_ai.database.crud.db import get_db
 from lambda_ai.database.schemas.api_function import APIFunctionCreate
+from lambda_ai.database.schemas.user import CreateUser, User
+from lambda_ai.database.crud.user import (
+    create_user,
+    get_user_from_email,
+    get_user_from_session,
+)
 from lambda_ai.lambdaai.apis import APIFunction
 from lambda_ai.database.main import db_session
 from lambda_ai.lambdaai.db import DB
@@ -114,3 +123,60 @@ def get_databases(request: None):
 @app.post("/query_tool")
 def query_tool(request: None):
     pass
+
+
+@app.post("/register")
+def register(request: CreateUser):
+    # create new user in database
+    with db_session() as db:
+        new_user = create_user(db=db, user=request)
+
+    new_user_return = {
+        "first_name": new_user.first_name,
+        "last_name": new_user.last_name,
+        "email": new_user.email,
+        "id": new_user.id,
+    }
+
+    response = JSONResponse(new_user_return)
+
+    # Pass back session ID as a cookie for browser to store
+    session_id = new_user.session_id
+    response.set_cookie(  # TODO: Add safety params for prod environment
+        key="session_id",
+        value=session_id,
+        path="/",
+        # secure=True,
+        # httponly=True,
+        # samesite='strict'
+    )
+
+    return response
+
+
+@app.get("/login")
+def login(request: LoginRequest, bearer_token: Annotated[str | None, Header()] = None):
+    with db_session() as db:
+        user = get_user_from_email(db=db, email=LoginRequest.email)
+
+    user_return = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "id": user.id,
+    }
+
+    response = JSONResponse(user_return)
+
+    if not bearer_token:
+        session_id = user.session_id
+        response.set_cookie(  # TODO: Add safety params for prod environment
+            key="session_id",
+            value=session_id,
+            path="/",
+            # secure=True,
+            # httponly=True,
+            # samesite='strict'
+        )
+
+    return response
