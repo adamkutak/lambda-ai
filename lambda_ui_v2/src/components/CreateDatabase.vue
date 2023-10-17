@@ -12,7 +12,15 @@
                 <textarea id="dbDescription" v-model="database.description" required></textarea>
 
                 <!-- Moved the Create Database button here -->
-                <button type="submit">Create Database</button>
+                <button v-if="!loading && !generate_error" type="submit">Create Database</button>
+                <div v-else-if="loading">
+                    <span>Generating...</span>
+                    <!-- You can replace the following with your own spinner component or icon -->
+                    <!-- <img src="path_to_spinner.gif" alt="Loading..." />  -->
+                </div>
+                <div v-else-if="generate_error">
+                    <span style="color: red;">Error: Something went wrong</span>
+                </div>
             </div>
 
             <!-- Right Side: Columns -->
@@ -46,15 +54,19 @@
 </template>
 
 <script>
+import axios from 'axios';
+import GlobalState from '@/globalState.js';
 export default {
     data() {
         return {
+            loading: false,
+            generate_error: false,
             database: {
                 name: '',
                 description: '',
                 columns: [{ name: '', type: 'int', primaryKey: false, unique: false }]
             },
-            types: ['int', 'string', 'float', 'boolean']
+            types: ['int', 'str', 'float', 'bool']
         };
     },
     methods: {
@@ -65,9 +77,40 @@ export default {
             this.database.columns.splice(index, 1);
         },
         submitForm() {
-            console.log(this.database);
-            // Implement your submit logic here
+            this.loading = true;
+            this.generate_error = false;
+            // Transforming the columns to fit the Pydantic model
+            const formattedColumns = this.database.columns.map(column => ({
+                name: column.name,
+                type: column.type,
+                primary_key: column.primaryKey,
+                unique: column.unique
+            }));
+
+            // Constructing the request payload
+            const requestData = {
+                name: this.database.name,
+                description: this.database.description,
+                columns: formattedColumns
+            };
+
+            console.log(requestData);
+
+            // Assuming you will send the requestData to your backend using Axios or some other method
+            axios.post(process.env.VUE_APP_BACKEND_URL + '/create_table', requestData)
+                .then(response => {
+                    console.log(response.data);
+                    GlobalState.addDatabase(response.data.table)
+                })
+                .catch(error => {
+                    console.error('Error posting data:', error);
+                    this.generate_error = true;
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
         }
+
     }
 }
 </script>

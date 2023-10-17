@@ -3,7 +3,7 @@ import os
 
 
 def test_createdb_add_drop_tables():
-    test_db = DB("my_test_db", "generated_dbs")
+    test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
 
     table_1_columns = {
         "item_id": {

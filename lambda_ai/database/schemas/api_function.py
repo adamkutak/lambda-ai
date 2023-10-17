@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 
+
 class APIFunctionBase(BaseModel):
     name: str
+    slug_name: str
     path: str
     inputs: Dict
     outputs: Dict
@@ -14,8 +16,10 @@ class APIFunctionBase(BaseModel):
     attached_db_id: Optional[int] = None
     force_use_db: bool
 
+
 class APIFunctionCreate(APIFunctionBase):
     pass
+
 
 class APIFunction(APIFunctionBase):
     id: int

@@ -1,66 +1,66 @@
 <template>
     <div class="database-detail">
-        <!-- Display only when not loading -->
-        <template v-if="!loading">
+        <template v-if="database">
             <div class="card">
                 <h1>{{ database.name }}</h1>
+                <p class="description">{{ database.description }}</p>
 
                 <section class="columns">
                     <h2>Columns</h2>
                     <div v-for="(details, columnName) in database.columns" :key="columnName" class="column">
                         <label>{{ columnName }}</label>
                         <span class="type">{{ details.type }}</span>
-                        <span v-if="details.constraints" class="constraints">{{ details.constraints }}</span>
+                        <div v-if="details.constraints && details.constraints.length" class="constraints">
+                            Constraints: {{ details.constraints.join(', ') }}
+                        </div>
                     </div>
                 </section>
             </div>
         </template>
-
-        <!-- Display a loader or some message while fetching the data -->
-        <div v-if="loading" class="loading">
-            Loading database details...
-        </div>
+        <template v-else>
+            <div class="error">
+                Table not found.
+            </div>
+        </template>
     </div>
 </template>
 
 <script>
-import axios from 'axios'; // Assuming you are using axios to make API calls
+import GlobalState from '@/globalState.js';
 
 export default {
     data() {
         return {
-            loading: true,
-            database: {
-                name: '',
-                columns: {}
-            }
+            database: null
         };
     },
-    methods: {
-        async fetchDatabaseDetails() {
-            try {
-                let response = await axios.get(`YOUR_API_ENDPOINT/databases/${this.$route.params.id}`);
+    methods: { // right now we have a temporary 1-1 relationship for tables and dbs. we just show tables for now.
+        fetchDatabaseDetails() {
+            const foundDatabase = GlobalState.state.databases.find(db => db.id === parseInt(this.$route.params.id));
 
-                if (response.data) {
-                    this.database = response.data;
-                } else {
-                    this.database = {
-                        name: 'not found',
-                        columns: { "not found": { type: "unknown", constraints: "none" } }
-                    };
-                }
-            } catch (error) {
-                console.error("Error fetching database details:", error);
-                this.database = {
-                    name: 'not found',
-                    columns: { "not found": { type: "unknown", constraints: "none" } }
-                };
-            } finally {
-                this.loading = false;
+            if (foundDatabase) {
+                this.database = foundDatabase;
+            } else {
+                this.setNotFound();
             }
         },
+        setNotFound() {
+            this.tool = {
+                name: 'not found',
+                description: 'not found',
+                inputs: { "not found": "not found" },
+                outputs: { "not found": "not found" }
+            };
+        },
     },
-    created() {
+    watch: {
+        '$route'(to, from) {
+            if (to.params.id !== from.params.id) {
+                this.fetchDatabaseDetails();
+            }
+        }
+    },
+    mounted() {
         this.fetchDatabaseDetails();
     }
 }
@@ -101,11 +101,10 @@ export default {
     padding: 4px 8px;
     border-radius: 3px;
 }
-
-.loading {
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+.error {
+    color: red;
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 2em;
 }
 </style>

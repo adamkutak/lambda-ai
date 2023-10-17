@@ -1,8 +1,15 @@
 import sqlite3
 import os
 
-DEFAULT_DB_PATH = "generated_dbs"
+DEFAULT_DB_PATH = "lambda_ai/generated_dbs"
 MAX_ROWS_TO_DISPLAY = 3
+
+SQL_type_conversion = {
+    "str": "VARCHAR(255)",
+    "int": "INTEGER",
+    "float": "FLOAT",
+    "bool": "BOOL",
+}
 
 
 class DB:
@@ -10,6 +17,7 @@ class DB:
         self,
         name,
         location: str = None,
+        replace_existing: bool = False,
     ):
         db_name = f"{name}.db"
 
@@ -19,13 +27,14 @@ class DB:
         self.test_db_path = location + "/test_dbs/" + db_name
         self.table_names = []
 
-        curr_dbs_at_path = os.listdir(location)
         # TODO: temporarily removing existing file for ease of use...
-        if db_name in curr_dbs_at_path:
-            os.remove(self.path)
-        curr_dbs_at_test_path = os.listdir(location + "/test_dbs")
-        if db_name in curr_dbs_at_test_path:
-            os.remove(self.test_db_path)
+        if replace_existing:
+            curr_dbs_at_path = os.listdir(location)
+            if db_name in curr_dbs_at_path:
+                os.remove(self.path)
+            curr_dbs_at_test_path = os.listdir(location + "/test_dbs")
+            if db_name in curr_dbs_at_test_path:
+                os.remove(self.test_db_path)
 
     def add_table(
         self,
@@ -41,7 +50,7 @@ class DB:
         create_table_sql = f"CREATE TABLE {name} ("
 
         for col_name, col_info in columns.items():
-            col_type = col_info["type"]
+            col_type = SQL_type_conversion[col_info["type"]]
             col_constraints = " ".join(col_info["constraints"])
             create_table_sql += f"{col_name} {col_type} {col_constraints}, "
 

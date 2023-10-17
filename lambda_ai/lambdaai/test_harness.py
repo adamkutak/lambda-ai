@@ -29,7 +29,7 @@ class TestHarness:
         api_file: APIFile,
     ):
         self.api_function = api_function
-        self.test_server = APIEnvironment(api_file)
+        self.test_server = APIEnvironment(api_file, for_testing=True)
 
     def perform_test(self):
         deploy_result, message = self.test_server.deploy()
@@ -49,7 +49,6 @@ class TestHarness:
             e, response = self.test_server.query(
                 self.api_function.path, test_case["input"]
             )
-
             if e:
                 error_message = (
                     f"error on test case: {str(test_case['input'])}, error: {e}"
@@ -61,7 +60,7 @@ class TestHarness:
             ):
                 error_message = f"error on test case: {str(test_case['input'])}, expected output is: {str(test_case['output'])}. Actual output is {str(response.json())}"
 
-            if test_db:
+            if test_db and not error_message:
                 post_sql_tests = test_case.get("post_sql", [])
                 for test in post_sql_tests:
                     if not error_message:

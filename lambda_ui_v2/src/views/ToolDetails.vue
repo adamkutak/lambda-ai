@@ -1,43 +1,32 @@
 <template>
     <div class="tool-detail">
-        <!-- Display only when not loading -->
-        <template v-if="!loading">
-            <div class="card">
-                <h1>{{ tool.name }}</h1>
-                <p class="description">{{ tool.description }}</p>
-
-                <section class="parameters">
-                    <h2>Inputs</h2>
-                    <div v-for="(type, key) in tool.inputs" :key="key" class="parameter">
-                        <label :for="'input-' + key">{{ key }}</label>
-                        <input :id="'input-' + key" v-model="inputValues[key]" :placeholder="type" />
-                    </div>
-
-                    <h2>Outputs</h2>
-                    <div v-for="(type, key) in tool.outputs" :key="key" class="parameter">
-                        <label>{{ key }}</label>
-                        <input readonly :value="outputValues[key]" :placeholder="type" />
-                    </div>
-                </section>
-
-                <button @click="runTool">Run</button>
-            </div>
-        </template>
-
-        <!-- Display a loader or some message while fetching the data -->
-        <div v-if="loading" class="loading">
-            Loading tool details...
+        <div class="card">
+            <h1>{{ tool.name }}</h1>
+            <p class="description">{{ tool.description }}</p>
+            <section class="parameters">
+                <h2>Inputs</h2>
+                <div v-for="(type, key) in tool.inputs" :key="key" class="parameter">
+                    <label :for="'input-' + key">{{ key }}</label>
+                    <input :id="'input-' + key" v-model="inputValues[key]" :placeholder="type" />
+                </div>
+                <h2>Outputs</h2>
+                <div v-for="(type, key) in tool.outputs" :key="key" class="parameter">
+                    <label>{{ key }}</label>
+                    <input readonly :value="outputValues[key]" :placeholder="type" />
+                </div>
+            </section>
+            <button @click="runTool">Run</button>
         </div>
     </div>
 </template>
   
 <script>
-import axios from 'axios'; // Assuming you are using axios to make API calls
+import axios from 'axios';
+import GlobalState from '@/globalState.js';
 
 export default {
     data() {
         return {
-            loading: true,
             tool: {
                 name: '',
                 description: '',
@@ -49,38 +38,44 @@ export default {
         };
     },
     methods: {
-        async fetchToolDetails() {
-            try {
-                let response = await axios.get(`YOUR_API_ENDPOINT/tools/${this.$route.params.id}`);
+        fetchToolDetails() {
+            // Check in globalState.tools first
+            const toolId = parseInt(this.$route.params.id, 10);
+            const foundTool = GlobalState.state.tools.find(tool => tool.id === toolId);
+            console.log(foundTool)
 
-                if (response.data) {
-                    this.tool = response.data;
-                } else {
-                    this.tool = {
-                        name: 'not found',
-                        description: 'not found',
-                        inputs: { "not found": "not found" },
-                        outputs: { "not found": "not found" }
-                    };
-                }
-            } catch (error) {
-                console.error("Error fetching tool details:", error);
-                this.tool = {
-                    name: 'not found',
-                    description: 'not found',
-                    inputs: { "not found": "not found" },
-                    outputs: { "not found": "not found" }
-                };
-            } finally {
-                this.loading = false;
+            if (foundTool) {
+                this.tool = foundTool;
+            } else {
+                this.setNotFound();
             }
         },
+        setNotFound() {
+            this.tool = {
+                name: 'not found',
+                description: 'not found',
+                inputs: { "not found": "not found" },
+                outputs: { "not found": "not found" }
+            };
+        },
         async runTool() {
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
+                }
+            };
+
+            const query_data = {
+                id: this.tool.id,
+                inputs: this.inputValues
+            }
             try {
-                let response = await axios.post('YOUR_API_ENDPOINT/run-tool', this.inputValues);
+                let response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/query_tool', query_data, config);
 
                 if (response.data) {
-                    this.outputValues = response.data;
+                    this.outputValues = response.data.output;
+                    console.log(response.data.output)
                 } else {
                     console.error("No data received from the API.");
                     this.outputValues = {
@@ -95,7 +90,14 @@ export default {
             }
         }
     },
-    created() {
+    watch: {
+        '$route'(to, from) {
+            if (to.params.id !== from.params.id) {
+                this.fetchToolDetails();
+            }
+        }
+    },
+    mounted() {
         this.fetchToolDetails();
     }
 }
@@ -167,10 +169,4 @@ button:hover {
     transform: translateY(-2px);
 }
 
-.loading {
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
-}
 </style>

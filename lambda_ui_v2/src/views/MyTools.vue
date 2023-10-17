@@ -14,15 +14,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <template v-for="row in tableRows">
-                        <tr @click="toggleDetails(row.id)" v-if="!row.isDetailRow" :key="row.id">
-                            <td>{{ row.name }}</td>
-                            <td>{{ row.inputs.join(', ') }}</td>
-                            <td>{{ row.outputs.join(', ') }}</td>
-                            <td><router-link :to="'/tools/' + row.id">View</router-link></td>
+                    <template v-for="tool in tools" :key="tool.id">
+                        <tr @click="toggleDetails(tool.id)">
+                            <td>{{ tool.name }}</td>
+                            <td>{{ formatEntries(tool.inputs) }}</td>
+                            <td>{{ formatEntries(tool.outputs) }}</td>
+                            <td><router-link :to="'/tools/' + tool.id">View</router-link></td>
                         </tr>
-                        <tr v-if="row.isDetailRow" :key="'details-' + row.id">
-                            <td colspan="4">{{ row.description }}</td>
+                        <tr v-if="tool.showDetails" :key="'details-' + tool.id">
+                            <td colspan="4">{{ tool.description }}</td>
                         </tr>
                     </template>
                 </tbody>
@@ -32,49 +32,23 @@
 </template>
   
 <script>
+import GlobalState from '@/globalState.js';
 export default {
     data() {
         return {
-            tools: [
-                {
-                    id: 1,
-                    name: "Tool 1",
-                    inputs: ["input1", "input2"],
-                    outputs: ["output1", "output2"],
-                    description: "This is a description for Tool 1.",
-                    showDetails: false
-                },
-                {
-                    id: 2,
-                    name: "Tool 2",
-                    inputs: ["input10", "input200"],
-                    outputs: ["output100", "output2000"],
-                    description: "My new tool is even better than the first one.",
-                    showDetails: false
-                },
-            ]
+            tools: GlobalState.state.tools
         };
-    },
-    computed: {
-        tableRows() {
-            const rows = [];
-            this.tools.forEach(tool => {
-                rows.push(tool);
-                if (tool.showDetails) {
-                    rows.push({ ...tool, isDetailRow: true });
-                }
-            });
-            return rows;
-        }
     },
     methods: {
         toggleDetails(id) {
             const tool = this.tools.find(t => t.id === id);
             if (tool) tool.showDetails = !tool.showDetails;
+        },
+        formatEntries(entries) {
+            return Object.entries(entries).map(([key, type]) => `${key} (${type})`).join(', ');
         }
     }
 }
-
 </script>
   
 <style scoped>

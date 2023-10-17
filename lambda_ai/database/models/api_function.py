@@ -8,6 +8,7 @@ class APIFunctionModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    slug_name = Column(String, unique=True, index=True)
     path = Column(String, unique=True, index=True)
     inputs = Column(JSON)
     outputs = Column(JSON)

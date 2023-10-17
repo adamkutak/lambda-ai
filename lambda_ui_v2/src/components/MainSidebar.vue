@@ -29,32 +29,45 @@
 </template>
 
 <script>
+import GlobalState from '@/globalState.js';
+
 export default {
     data() {
         return {
             toolsMenuVisible: false,
             databasesMenuVisible: false,
-            tools: [ // Sample data
-                { id: 1, name: 'Tool 1' },
-                { id: 2, name: 'Tool 2' },
-                // ... add as many as you'd like
-            ],
-            databases: [ // Sample data
-                { id: 1, name: 'Database 1' },
-                { id: 2, name: 'Database 2' },
-                // ... add as many as you'd like
-            ],
         };
     },
-    methods: {
+    computed: {
+        tools() {
+            return GlobalState.state.tools;
+        },
+        databases() {
+            return GlobalState.state.databases;
+        }
+    },
+    methods: {  
         toggleToolsMenu() {
             this.toolsMenuVisible = !this.toolsMenuVisible;
-            // this.databasesMenuVisible = false; // Close other dropdowns
         },
         toggleDatabasesMenu() {
             this.databasesMenuVisible = !this.databasesMenuVisible;
-            // this.toolsMenuVisible = false; // Close other dropdowns
         },
+        adjustMenuVisibility() {
+            if (this.$route.path.startsWith('/tools') && this.$route.params.id) {
+                this.toolsMenuVisible = true;
+            } else if (this.$route.path.startsWith('/databases') && this.$route.params.id) {
+                this.databasesMenuVisible = true;
+            }
+        }
+    },
+    mounted() {
+        this.adjustMenuVisibility();
+    },
+    watch: {
+        '$route'() {
+            this.adjustMenuVisibility();
+        }
     }
 }
 </script>
