@@ -68,3 +68,10 @@ Second Iteration MVP:
 - ability to add external packages/APIs
 - queue cards in UI to see the status of a generating API tool.
   - otherwise, if the user leaves the page they can't see if an error occured
+--------------------------------
+Other Features:
+- create table from excel/csv
+- download table as excel/csv
+- modify table (add columns)
+- perform operation on table without functions
+- create new function by modifying existing function

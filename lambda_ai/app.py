@@ -93,6 +93,13 @@ def create_tool(request: CreateToolRequest):
                     status_code=500,
                     detail="Attempted to attach a database that was not found",
                 )
+
+        # TODO: convert testcase natural language query into SQL for each testcase if present.
+        converted_testcases = []
+        for tc in testcases:
+            # implement generation of sql database checks from natural language descriptions
+            converted_testcases.append(tc)
+
     else:
         attached_db = None
 

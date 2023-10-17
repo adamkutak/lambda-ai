@@ -1,7 +1,7 @@
 <template>
     <div class="card">
-        <CreateTool ref="createToolRef" :testCases="testCasesData" />
-        <TestCases ref="testCasesRef" :inputs="inputs" :outputs="outputs" />
+        <CreateTool ref="createToolRef" :testCases="testCasesData" @update:selectedDatabase="handleDatabaseUpdate"/>
+        <TestCases ref="testCasesRef" :inputs="inputs" :outputs="outputs" :selectedDatabase="selectedDatabase"/>
     </div>
 </template>
   
@@ -18,6 +18,7 @@ export default {
         return {
             inputs: [],
             outputs: [],
+            selectedDatabase: null,
             testCasesData: []
         };
     },
@@ -25,9 +26,15 @@ export default {
         if (this.$refs.createToolRef) {
             this.inputs = this.$refs.createToolRef.tool.inputs;
             this.outputs = this.$refs.createToolRef.tool.outputs;
+            this.selectedDatabase = this.$refs.createToolRef.tool.selectedDatabase;
         }
         if (this.$refs.testCasesRef) {
             this.testCasesData = this.$refs.testCasesRef.testCases;
+        }
+    },
+    methods: {
+        handleDatabaseUpdate(newDatabase) {
+            this.selectedDatabase = newDatabase;
         }
     }
 }
