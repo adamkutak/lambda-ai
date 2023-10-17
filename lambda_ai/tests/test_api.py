@@ -305,7 +305,7 @@ Use the math library in this function.
 
 
 def test_basic_with_database_1():
-    my_test_db = DB("my_test_db", "generated_dbs")
+    my_test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
     table_1_columns = {
         "item_id": {
             "type": "INTEGER",
@@ -391,7 +391,7 @@ def test_basic_with_database_1():
 
 
 def test_basic_with_database_2():
-    my_test_db = DB("my_test_db", "generated_dbs")
+    my_test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
     table_1_columns = {
         "ship_id": {
             "type": "INTEGER",
@@ -542,7 +542,7 @@ Use the math library in this function.
 
 
 def test_basic_with_database_1_autogenerate_tests():
-    my_test_db = DB("my_test_db", "generated_dbs")
+    my_test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
     table_1_columns = {
         "item_id": {
             "type": "INTEGER",

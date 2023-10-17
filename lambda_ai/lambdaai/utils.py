@@ -1,5 +1,6 @@
 import math
 import sqlite3
+import re
 
 SAFE_NAME_CHARACTERS = "/_"
 
@@ -77,3 +78,12 @@ def execute_sql(db_path: str, sql: str):
     connection.commit()
     connection.close()
     return result
+
+
+def generate_slug(name: str) -> str:
+    slug = name.lower()
+    slug = slug.replace(" ", "_")
+    slug = re.sub(r"[^a-z0-9\_]", "", slug)
+    slug = re.sub(r"_+", "_", slug)
+
+    return slug

@@ -1,6 +1,6 @@
 import openai
 import json
-from lambdaai.prompts import ONE_SHOT_PROMPT_FUNCTION_ARGS
+from .prompts import ONE_SHOT_PROMPT_FUNCTION_ARGS
 
 MAX_MESSAGE_CHAR_LENGTH = 3000
 

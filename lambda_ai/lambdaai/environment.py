@@ -2,10 +2,10 @@ import subprocess
 import requests
 import atexit
 from typing import Dict
-from lambdaai.utils import get_imports
+from .utils import get_imports
+import psutil
 
-
-TEST_FOLDER = "generated_tests"
+TEST_FOLDER = "lambda_ai/generated_tests"
 
 IMPORT_CODE = [
     "from fastapi import FastAPI, Request",
@@ -34,19 +34,28 @@ async def server_error_handler(request: Request, exc: Exception):
 """
 
 DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = "8000"
+DEFAULT_PORT = "8005"
+DEFAULT_TEST_PORT = "8010"
 
 
 class APIFile:
-    def __init__(self, name: str, file_path: str = None, attach_db: bool = False):
+    def __init__(
+        self,
+        name: str,
+        file_path: str = None,
+        attach_db: bool = False,
+        pulling_old=False,
+    ):
         self.name = name
         self.functions = {}
         self.imports = set(IMPORT_CODE)
-        if file_path:
-            self.file_path = file_path + "/" + self.name + ".py"
+        if not pulling_old:
+            if file_path:
+                self.file_path = file_path + "/" + self.name + ".py"
+            else:
+                self.file_path = TEST_FOLDER + "/" + self.name + ".py"
         else:
-            self.file_path = TEST_FOLDER + "/" + self.name + ".py"
-
+            self.file_path = file_path
         self.add_function(
             {
                 "name": "exception_handler",
@@ -134,12 +143,26 @@ class APIFile:
 
 
 class APIEnvironment:
-    def __init__(self, api_file: APIFile, host: str = None, port: str = None):
+    def __init__(
+        self,
+        api_file: APIFile,
+        host: str = None,
+        port: str = None,
+        is_live: bool = False,
+        for_testing: bool = False,
+        server_process_id: int = None,
+    ):
         self.api_file = api_file
         self.host = host or DEFAULT_HOST
-        self.port = port or DEFAULT_PORT
         self.file_uvicorn = api_file.file_path.replace("/", ".").replace(".py", "")
         self.requirements_file = self.create_requirements_file()
+        self.is_live = is_live
+        self.server_process_id = server_process_id
+
+        if for_testing:
+            self.port = port or DEFAULT_TEST_PORT
+        else:
+            self.port = port or DEFAULT_PORT
 
     def deploy(self):
         if self.requirements_file:
@@ -167,10 +190,21 @@ class APIEnvironment:
         except Exception as e:
             return 1, f"error starting api deployment: {e}"
 
+        self.is_live = True
+        self.server_process_id = self.server_process.pid
         return 0, "success"
 
     def undeploy(self):
-        self.server_process.terminate()
+        try:
+            p = psutil.Process(self.server_process_id)
+            p.terminate()
+        except Exception as e:
+            pass
+
+        self.is_live = False
+        self.server_process_id = None
+
+        return
 
     def query(self, path, input):
         try:
@@ -179,7 +213,7 @@ class APIEnvironment:
                 params=input,
             )
         except Exception as e:
-            return e, response
+            return e, None
         else:
             return None, response
 
@@ -220,3 +254,6 @@ class APIEnvironment:
                 live = True
             except Exception:
                 pass
+
+    def find_server_process(self):
+        pass
