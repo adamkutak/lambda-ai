@@ -59,7 +59,7 @@ First iteration MVP:
 - add landing page with login screen
 - figure out deployment (possible issues with core tech)
 - user can't test SQL in UI
-- ?? ability to delete/undeploy things ??
+- ability to delete/undeploy things
 - simple admin console to view database
 --------------------------------
 Second Iteration MVP:
@@ -71,6 +71,7 @@ Second Iteration MVP:
   - otherwise, if the user leaves the page they can't see if an error occured
 --------------------------------
 Other Features:
+- On tool page: use tool in excel/python/others (copy link/code)
 - create table from excel/csv
 - download table as excel/csv
 - modify table (add columns)
