@@ -73,12 +73,13 @@ Second Iteration MVP:
 AUTH BRANCH
 - Create a user model and user pydantic schema ✅ NOQA
 - CRUD functions ✅ NOQA
-- Add session ID to model & crud ✅ NOQA
-- /register and /login API route ✅ NOQA
-    - creates new user and passes back a session ID to be used as Bearer
+- Add session ID to model & crud ✅ QA
+- /register and /login API route ✅ QA
 - Update other models to have a foreign key for user id
 - update FastAPI routes to extract bearer token and pass to AuthManager (https://fastapi.tiangolo.com/tutorial/header-params/)
+- set expiry on session_id, store expiry in DB, and check for expiry on every API call
 
 Small fixes found:
 - api_models.py should be called api_schemas.py [Oct 17th]
+- UserModel.id gets auto-incremented on a failed register attempt
 

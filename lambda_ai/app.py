@@ -401,8 +401,12 @@ def query_tool(request: QueryToolRequest):
 @app.post("/register")
 def register(request: CreateUser):
     # create new user in database
-    with db_session() as db:
-        new_user = create_user(db=db, user=request)
+    try:
+        with db_session() as db:
+            new_user = create_user(db=db, user=request)
+
+    except Exception:
+        return JSONResponse({"error": "Email alrady in use."}, status_code=400)
 
     new_user_return = {
         "first_name": new_user.first_name,
@@ -430,7 +434,12 @@ def register(request: CreateUser):
 @app.get("/login")
 def login(request: LoginRequest, bearer_token: Annotated[str | None, Header()] = None):
     with db_session() as db:
-        user = get_user_from_email(db=db, email=LoginRequest.email)
+        user = get_user_from_email(db=db, email=request.email)
+
+    if not user:
+        return JSONResponse(
+            {"error": "Incorrect username and password"}, status_code=400
+        )
 
     user_return = {
         "first_name": user.first_name,
@@ -441,6 +450,7 @@ def login(request: LoginRequest, bearer_token: Annotated[str | None, Header()] =
 
     response = JSONResponse(user_return)
 
+    print(bearer_token)
     if not bearer_token:
         session_id = user.session_id
         response.set_cookie(  # TODO: Add safety params for prod environment

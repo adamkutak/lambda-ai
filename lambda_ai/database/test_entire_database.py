@@ -11,11 +11,15 @@ from lambda_ai.database.crud.api_function import (
 )
 from lambda_ai.database.crud.db import create_db, delete_db, get_all_dbs, get_db
 from lambda_ai.database.crud.table import create_table, get_all_tables_by_db
+from lambda_ai.database.crud.user import create_user, get_user_from_email
+
 from lambda_ai.database.main import db_test_session
+
 from lambda_ai.database.schemas.api_function import APIFunctionCreate
 from lambda_ai.database.schemas.db import DBCreate
 from lambda_ai.database.schemas.api_container import APIFileCreate, APIEnvironmentCreate
 from lambda_ai.database.schemas.table import TableCreate
+from lambda_ai.database.schemas.user import CreateUser
 
 
 # FIXME: some of the transactions are not being rolled back with db_test_session, and the data in the db is persisting between tests
@@ -257,6 +261,31 @@ def test_create_tables_and_db():
         assert tables[1].db_id == db.id
 
 
+def test_create_user():
+    user_schema = CreateUser(
+        first_name="Michael",
+        last_name="Moriarty",
+        email="m.hockey8@gmail.com",
+        password="password",
+    )
+
+    with db_test_session() as db:
+        new_user = create_user(db, user_schema)
+
+        user_in_db = get_user_from_email(db, new_user.email)
+
+    assert new_user.id == 1
+    assert isinstance(new_user.session_id, str)
+
+    assert new_user.id == user_in_db.id
+    assert new_user.first_name == user_in_db.first_name
+    assert new_user.last_name == user_in_db.last_name
+    assert new_user.email == user_in_db.email
+    assert new_user.password == user_in_db.password
+
+    assert new_user == user_in_db
+
+
 test_create_and_retrieve_api_function()
 test_update_api_function()
 test_create_db()
@@ -266,3 +295,4 @@ test_delete_db()
 test_add_db_to_api_function()
 test_create_api_file_and_environment()
 test_create_tables_and_db()
+test_create_user()
