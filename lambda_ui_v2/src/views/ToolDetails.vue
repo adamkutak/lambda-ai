@@ -1,7 +1,10 @@
 <template>
     <div class="tool-detail">
         <div class="card">
-            <h1>{{ tool.name }}</h1>
+            <div class="header-container">
+                <h1>{{ tool.name }}</h1>
+                <button class="delete-button" @click="deleteTool">Delete</button>
+            </div>
             <p class="description">{{ tool.description }}</p>
             <section class="parameters">
                 <h2>Inputs</h2>
@@ -88,6 +91,28 @@ export default {
                     // ... default error values if necessary
                 };
             }
+        },
+        async deleteTool() {
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
+                }
+            };
+            try {
+                let response = await axios.delete(process.env.VUE_APP_BACKEND_URL + '/delete_tool', { data: { id: this.tool.id }, headers: config.headers });
+                console.log(response)
+                if (response.status === 200) {
+                    console.log("Tool deleted successfully!");
+                    await GlobalState.fetchTools();
+                    this.$router.push('/tools');
+
+                } else {
+                    console.error("Failed to delete the tool.");
+                }
+            } catch (error) {
+                console.error("Error deleting tool:", error);
+            }
         }
     },
     watch: {
@@ -169,4 +194,23 @@ button:hover {
     transform: translateY(-2px);
 }
 
+.delete-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.delete-button:hover {
+    background-color: darkred;
+}
+.header-container {
+    position: relative;
+}
 </style>
