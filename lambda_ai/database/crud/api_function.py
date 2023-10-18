@@ -22,8 +22,8 @@ def get_api_function(db: Session, api_function_id: int):
     return db_api_function
 
 
-def get_api_functions(db: Session, skip: int = 0, limit: int = 100):
-    db_api_function = db.query(APIFunctionModel).offset(skip).limit(limit).all()
+def get_api_functions(db: Session, limit: int = 100):
+    db_api_function = db.query(APIFunctionModel).limit(limit).all()
 
     return db_api_function
 

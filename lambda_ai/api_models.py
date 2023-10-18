@@ -39,4 +39,12 @@ class QueryToolRequest(BaseModel):
     inputs: dict
 
 
+class DeleteToolRequest(BaseModel):
+    id: int
+
+
+class DeleteDatabaseRequest(BaseModel):
+    id: int
+
+
 # print(json.dumps(CreateToolRequest.model_json_schema(), indent=2))

@@ -2,7 +2,13 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from lambda_ai.api_models import CreateTableRequest, CreateToolRequest, QueryToolRequest
+from lambda_ai.api_models import (
+    CreateTableRequest,
+    CreateToolRequest,
+    QueryToolRequest,
+    DeleteToolRequest,
+    DeleteDatabaseRequest,
+)
 from lambda_ai.database.crud.api_container import (
     create_api_environment,
     create_api_file,
@@ -18,7 +24,7 @@ from lambda_ai.database.crud.api_function import (
     get_api_functions,
     update_api_function,
 )
-from lambda_ai.database.crud.db import create_db, get_all_dbs, get_db
+from lambda_ai.database.crud.db import create_db, delete_db, get_all_dbs, get_db
 from lambda_ai.database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
 from lambda_ai.database.schemas.api_function import APIFunctionCreate
 from lambda_ai.database.schemas.db import DBCreate
@@ -28,6 +34,7 @@ from lambda_ai.database.main import db_session
 from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
 from lambda_ai.database.crud.table import (
     create_table as create_db_table,
+    delete_table,
     get_all_tables_by_db,
 )
 from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
@@ -382,3 +389,25 @@ def query_tool(request: QueryToolRequest):
         return {"output": response.json()}
     else:
         return {"error": e}
+
+
+@app.delete("/delete_tool")
+def delete_tool(request: DeleteToolRequest):
+    # this doesn't actually delete the tool, it just removes it from the database
+    # with the backend refactor, it will make it possible to actually delete the tool code too.
+    with db_session() as session:
+        delete_api_function(session, request.id)
+
+    return {"message": "success"}
+
+
+@app.delete("/delete_database")
+def delete_database(request: DeleteDatabaseRequest):
+    # this doesn't actually delete the sqlite file. Will do this with the refactor
+    with db_session() as session:
+        attached_tables = get_all_tables_by_db(session, request.id)
+        for table in attached_tables:
+            delete_table(session, table.id)
+        delete_db(session, request.id)
+
+    return {"message": "success"}
