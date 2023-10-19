@@ -75,19 +75,13 @@ AUTH BRANCH
 - CRUD functions ✅ NOQA
 - Add session ID to model & crud ✅ QA
 - /register and /login API route ✅ QA
-
-- Update other models to have a foreign key for user id
+- Update other models to have a foreign key for user id ✅ QA
   [✅] APIFunctionModel
   [✅] DBModel
-  [❓] Environments
+  [✅] Environments
+- update FastAPI routes to extract bearer token ✅ QA
+- check for bearer token for fast-tracked login in /login route ✅ QA
 
-- update FastAPI routes to extract bearer token and pass to AuthManager (https://fastapi.tiangolo.com/tutorial/header-params/)
-  [ ] /create_database <-- START HERE
-  [ ] /create_tool <-- THIS WILL BE HARD
 
-- set expiry on session_id, store expiry in DB, and check for expiry on every API call
 
-Small fixes found:
-- api_models.py should be called api_schemas.py [Oct 17th]
-- UserModel.id gets auto-incremented on a failed register attempt
 

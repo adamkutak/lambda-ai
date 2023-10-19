@@ -534,15 +534,26 @@ def register(request: CreateUser):
     return response
 
 
+# FIXME: Code is kinda ugly, probs could be redone better. Later.
+# NOTE: If logging in with bearer token, must send LoginRequest with blank email and pass fields.
 @app.get("/login")
-def login(request: LoginRequest, bearer_token: Annotated[str | None, Header()] = None):
-    with db_session() as db:
-        user = get_user_from_email(db=db, email=request.email)
+def login(request: LoginRequest, authorization: Annotated[str | None, Header()] = None):
+    user = None
+
+    if authorization:
+        session_id = parse_bearer_token(authorization)
+
+        with db_session() as db:
+            user = get_user_from_session(db, session_id)
 
     if not user:
-        return JSONResponse(
-            {"error": "Incorrect username and password"}, status_code=400
-        )
+        with db_session() as db:
+            user = get_user_from_email(db=db, email=request.email)
+
+        if not user:
+            return JSONResponse(
+                {"error": "Incorrect username and password"}, status_code=400
+            )
 
     user_return = {
         "first_name": user.first_name,
@@ -553,7 +564,7 @@ def login(request: LoginRequest, bearer_token: Annotated[str | None, Header()] =
 
     response = JSONResponse(user_return)
 
-    if not bearer_token:
+    if not authorization:
         session_id = user.session_id
         response.set_cookie(  # TODO: Add safety params for prod environment
             key="session_id",
