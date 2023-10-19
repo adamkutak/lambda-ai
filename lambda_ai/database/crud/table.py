@@ -17,8 +17,8 @@ def get_table(db: Session, table_id: int):
 
 
 def get_all_tables_by_db(db: Session, db_id: int):
-    table_obj = db.query(TableModel).filter(TableModel.db_id == db_id).all()
-    return table_obj
+    tables = db.query(TableModel).filter(TableModel.db_id == db_id).all()
+    return tables
 
 
 def delete_table(db: Session, table_id: int):

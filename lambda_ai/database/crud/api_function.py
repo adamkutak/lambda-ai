@@ -23,11 +23,10 @@ def get_api_function(db: Session, api_function_id: int, user_id: int):
     return db_api_function
 
 
-def get_api_functions(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+def get_api_functions(db: Session, user_id: int, limit: int = 100):
     db_api_function = (
         db.query(APIFunctionModel)
         .filter(APIFunctionModel.user_id == user_id)
-        .offset(skip)
         .limit(limit)
         .all()
     )
