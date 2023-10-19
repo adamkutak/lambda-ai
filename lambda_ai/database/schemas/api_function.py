@@ -15,6 +15,7 @@ class APIFunctionBase(BaseModel):
     api_function_created: Dict = {}
     attached_db_id: Optional[int] = None
     force_use_db: bool
+    user_id: int
 
 
 class APIFunctionCreate(APIFunctionBase):

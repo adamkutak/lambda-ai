@@ -99,3 +99,12 @@ def unsafe_session_id(rand_str: str):
     hash = hashlib.sha256(data).hexdigest()
 
     return hash
+
+
+def parse_bearer_token(token: str):
+    if not isinstance(token, str):
+        raise TypeError("Bearer token must be a string.")
+
+    parsed_token = token.split(" ")[-1]
+
+    return parsed_token

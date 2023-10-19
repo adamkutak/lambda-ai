@@ -1,5 +1,6 @@
 from pydantic import ConfigDict
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 from lambda_ai.database.base import Base
 
 
@@ -10,5 +11,9 @@ class DBModel(Base):
     name = Column(String, unique=True, index=True)
     slug_name = Column(String, unique=True, index=True)
     location = Column(String)
+
+    # relationships
+    user_id = Column(Integer, ForeignKey("users.id"))
+    owner = relationship("UserModel", back_populates="databases")
 
     model_config = ConfigDict(from_attributes=True)

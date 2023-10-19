@@ -5,6 +5,7 @@ class DBBase(BaseModel):
     name: str
     slug_name: str
     location: str
+    user_id: int
 
 
 class DBCreate(DBBase):
