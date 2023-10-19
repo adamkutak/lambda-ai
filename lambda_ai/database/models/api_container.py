@@ -12,6 +12,9 @@ class APIFileModel(Base):
     functions = Column(JSON, default={})
     attach_db = Column(Boolean, default=False)
 
+    # relationships
+    user_id = Column(Integer, ForeignKey("users.id"))
+
 
 class APIEnvironmentModel(Base):
     __tablename__ = "api_environments"
@@ -24,3 +27,6 @@ class APIEnvironmentModel(Base):
     requirements_file = Column(String)
     is_live = Column(Boolean, default=False)
     server_process_id = Column(Integer, default=None)
+
+    # relationships
+    user_id = Column(Integer, ForeignKey("users.id"))

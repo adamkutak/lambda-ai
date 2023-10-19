@@ -11,6 +11,7 @@ class APIEnvironmentBase(BaseModel):
     requirements_file: str
     is_live: Optional[bool] = False
     server_process_id: Optional[int] = None
+    user_id: int
 
 
 class APIEnvironmentCreate(APIEnvironmentBase):
@@ -27,6 +28,7 @@ class APIFileBase(BaseModel):
     file_path: str
     functions: dict = {}
     attach_db: bool = False
+    user_id: int
 
 
 class APIFileCreate(APIFileBase):
