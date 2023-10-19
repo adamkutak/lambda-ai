@@ -463,21 +463,28 @@ def query_tool(
         )
 
     with db_session() as session:
-        envs = get_all_api_environments(
-            session, authed_user.id
-        )  # what if we don't use master file anymore and send error when tool isnt created and there isn't an env already?
-        master_env = envs[0]
-        master_file = get_api_file(session, master_env.api_file_id)
+        envs = get_all_api_environments(session, authed_user.id)
+
+        if not envs:
+            return JSONResponse({"error": "No tools to query."}, status_code=400)
+
+        # REVIEW: Not using master env anymore bcuz getting only user owned envs.
+        # But, doesn't matter what env is used... can query any tool from
+        # any API as long as tool is live. If user owns no envs, they haven't deployed
+        # any tools so we can return error.
+        first_env_found = envs[0]
+        first_file_found = get_api_file(session, first_env_found.api_file_id)
+
     # FIXME: the following code is awful. This is a dummy api_file that
     # we have to create so that we can instantiate the APIEnv.
     api_file = APIFile(
-        master_file.slug_name,
-        master_file.file_path,
-        master_file.attach_db,
+        first_file_found.slug_name,
+        first_file_found.file_path,
+        first_file_found.attach_db,
         pulling_old=True,
     )
     api_env = APIEnvironment(
-        api_file, master_env.host, master_env.port, master_env.is_live
+        api_file, first_env_found.host, first_env_found.port, first_env_found.is_live
     )
 
     with db_session() as session:
