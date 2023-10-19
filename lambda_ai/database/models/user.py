@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Date
 from sqlalchemy.orm import relationship
 from lambda_ai.database.base import Base
 
@@ -12,6 +12,7 @@ class UserModel(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String)
     session_id = Column(String(128), unique=True, nullable=False)
+    session_expiry = Column(Date)
 
     # relationships
     databases = relationship("DBModel", back_populates="owner")

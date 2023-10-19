@@ -2,14 +2,18 @@ from sqlalchemy.orm import Session
 from lambda_ai.database.models.user import UserModel
 from lambda_ai.database.schemas.user import CreateUser, User
 from lambda_ai.lambdaai.utils import unsafe_session_id
+from datetime import datetime, timedelta
 
 
 def create_user(db: Session, user: CreateUser):
     # generate session ID
     session_id = unsafe_session_id(user.first_name)  # TODO: Update with safe session ID
 
+    date_in_one_hour = datetime.now() + timedelta(hours=1)
     # create a user
-    new_user = UserModel(**user.model_dump(), session_id=session_id)
+    new_user = UserModel(
+        **user.model_dump(), session_id=session_id, session_expiry=date_in_one_hour
+    )
 
     # insert into database
     db.add(new_user)
@@ -19,6 +23,14 @@ def create_user(db: Session, user: CreateUser):
     # db.refresh(new_user)
 
     return new_user
+
+
+# REVIEW: NOT DONE
+def udpate_user_session(db: Session, user_id: int, rand_str: str):
+    new_session_id = unsafe_session_id(rand_str)
+    new_expiry_time = datetime.now() + timedelta(hours=1)
+
+    return
 
 
 def get_user_from_session(db: Session, session_id: str):
