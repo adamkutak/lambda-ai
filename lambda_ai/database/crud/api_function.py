@@ -54,10 +54,11 @@ def update_api_function(db: Session, api_function_id: int, **kwargs):
     return db_api_function
 
 
-def delete_api_function(db: Session, api_function_id: int):
+def delete_api_function(db: Session, api_function_id: int, user_id: int):
     table_obj = (
         db.query(APIFunctionModel)
         .filter(APIFunctionModel.id == api_function_id)
+        .filter(APIFunctionModel.user_id == user_id)
         .first()
     )
     db.delete(table_obj)

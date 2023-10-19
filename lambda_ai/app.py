@@ -311,7 +311,7 @@ def create_table(
     # temporarily call create_database when we want to make a new table
     db_id = create_database(request, authorization)
     with db_session() as session:
-        db_obj = get_db(session, db_id)
+        db_obj = get_db(session, db_id, authed_user.id)
         db = DB(name=db_obj.slug_name, location=db_obj.location, replace_existing=True)
 
     # transform the columns because TableCreate takes a dict of columns
@@ -581,25 +581,64 @@ def login(request: LoginRequest, authorization: Annotated[str | None, Header()] 
 
     return response
 
-  
+
 @app.delete("/delete_tool")
-def delete_tool(request: DeleteToolRequest):
+def delete_tool(
+    request: DeleteToolRequest, authorization: Annotated[str | None, Header()] = None
+):
     # this doesn't actually delete the tool, it just removes it from the database
     # with the backend refactor, it will make it possible to actually delete the tool code too.
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        delete_api_function(session, request.id)
+        requested_api_function = get_api_function(session, request.id, authed_user.id)
+
+        if not requested_api_function:
+            return JSONResponse(
+                {"error": "Unable to delete requested tool."}, status_code=400
+            )
+
+        delete_api_function(session, request.id, authed_user.id)
 
     return {"message": "success"}
 
 
 @app.delete("/delete_database")
-def delete_database(request: DeleteDatabaseRequest):
+def delete_database(
+    request: DeleteDatabaseRequest,
+    authorization: Annotated[str | None, Header()] = None,
+):
     # this doesn't actually delete the sqlite file. Will do this with the refactor
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        attached_tables = get_all_tables_by_db(session, request.id)
+        # verify that user owns db requested
+        requested_db = get_db(session, request.id, authed_user.id)
+
+        if not requested_db:
+            return JSONResponse(
+                {"error": "Unable to delete requested database."}, status_code=400
+            )
+
+        attached_tables = get_all_tables_by_db(session, requested_db.id)
         for table in attached_tables:
             delete_table(session, table.id)
-        delete_db(session, request.id)
+        delete_db(session, requested_db.id)
 
     return {"message": "success"}
-
