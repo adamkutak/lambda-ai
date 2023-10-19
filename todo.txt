@@ -70,24 +70,11 @@ Second Iteration MVP:
   - otherwise, if the user leaves the page they can't see if an error occured
 
 
-AUTH BRANCH
-- Create a user model and user pydantic schema ✅ NOQA
-- CRUD functions ✅ NOQA
-- Add session ID to model & crud ✅ QA
-- /register and /login API route ✅ QA
+SESSION EXPIRY BRANCH NOTES
+- TODO: set expiry on session_id, store expiry in DB, and check for expiry on every API call
+- CURRENTLY WORKING ON:
+  - updated user model ✅
+  - working on crud.user udpate_user_session() func
+    - maybe this can be achieved through an update_user() general method tho...?
 
-- Update other models to have a foreign key for user id
-  [✅] APIFunctionModel
-  [✅] DBModel
-  [❓] Environments
-
-- update FastAPI routes to extract bearer token and pass to AuthManager (https://fastapi.tiangolo.com/tutorial/header-params/)
-  [ ] /create_database <-- START HERE
-  [ ] /create_tool <-- THIS WILL BE HARD
-
-- set expiry on session_id, store expiry in DB, and check for expiry on every API call
-
-Small fixes found:
-- api_models.py should be called api_schemas.py [Oct 17th]
-- UserModel.id gets auto-incremented on a failed register attempt
 
