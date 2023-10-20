@@ -11,9 +11,14 @@ class Tool(BaseModel):
     selectedDatabase: Optional[int] = None
 
 
+class PostSQL(BaseModel):
+    sql: str
+    assert_value: str
+
+
 class TestCaseSQLCheck(BaseModel):
-    dbTestRow: str
-    dbPostTestCheck: str
+    pre_sql: List[str]
+    post_sql: List[PostSQL]
 
 
 class TestCase(BaseModel):

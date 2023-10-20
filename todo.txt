@@ -77,3 +77,28 @@ Other Features:
 - modify table (add columns)
 - perform operation on table without functions
 - create new function by modifying existing function
+
+
+SQL GEN BRANCH
+--------------
+goal: when a user creates a new tool they
+      specify test cases to make sure that the tool works. 
+      
+      If that tool is stateful (has a db attached) then testing the output
+      of the tool is not good enough. You need to also test if the database
+      was updated correctly. 
+      
+      To do so, the user can specify a database test comprised of a setup
+      statement and a post-run query and state.
+
+      This can be a bit cumbersome, and our goal is to have an AI agent create
+      the setup statement, the post-run query, and post-run state given a test
+      case.
+
+- Create new one shot prompt (lambdaai/prompts.py)
+- Create new function call (lambdaai/gpt_function_calls.py)
+- Create a /generate_test_sql route
+
+Qs:
+- where do we store this sql info?
+  - right now we store the test-cases in the APIFunction Model
