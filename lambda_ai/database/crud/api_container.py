@@ -64,9 +64,15 @@ def get_api_environment(db: Session, env_id: int):
 
 
 def get_all_api_environments(
-    db: Session, skip: int = 0, limit: int = 100
+    db: Session, user_id: int, skip: int = 0, limit: int = 100
 ) -> list[APIEnvironment]:
-    env_objs = db.query(APIEnvironmentModel).offset(skip).limit(limit).all()
+    env_objs = (
+        db.query(APIEnvironmentModel)
+        .filter(APIEnvironmentModel.user_id == user_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return [env for env in env_objs]
 
 

@@ -11,8 +11,8 @@ DATABASE_URL = os.environ.get("POSTGRES_DB_URL")
 engine = create_engine(DATABASE_URL, echo=False)  # set echo to false for less verbosity
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 # drop foreign key dependant tables first:
-APIFunctionModel.__table__.drop(engine)
-TableModel.__table__.drop(engine)
+# APIFunctionModel.__table__.drop(engine)
+# TableModel.__table__.drop(engine)
 
 Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)

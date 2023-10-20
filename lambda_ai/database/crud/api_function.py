@@ -12,18 +12,24 @@ def create_api_function(db: Session, api_function: APIFunctionCreate):
     return db_api_function
 
 
-def get_api_function(db: Session, api_function_id: int):
+def get_api_function(db: Session, api_function_id: int, user_id: int):
     db_api_function = (
         db.query(APIFunctionModel)
         .filter(APIFunctionModel.id == api_function_id)
+        .filter(APIFunctionModel.user_id == user_id)
         .first()
     )
 
     return db_api_function
 
 
-def get_api_functions(db: Session, limit: int = 100):
-    db_api_function = db.query(APIFunctionModel).limit(limit).all()
+def get_api_functions(db: Session, user_id: int, limit: int = 100):
+    db_api_function = (
+        db.query(APIFunctionModel)
+        .filter(APIFunctionModel.user_id == user_id)
+        .limit(limit)
+        .all()
+    )
 
     return db_api_function
 
@@ -48,10 +54,11 @@ def update_api_function(db: Session, api_function_id: int, **kwargs):
     return db_api_function
 
 
-def delete_api_function(db: Session, api_function_id: int):
+def delete_api_function(db: Session, api_function_id: int, user_id: int):
     table_obj = (
         db.query(APIFunctionModel)
         .filter(APIFunctionModel.id == api_function_id)
+        .filter(APIFunctionModel.user_id == user_id)
         .first()
     )
     db.delete(table_obj)

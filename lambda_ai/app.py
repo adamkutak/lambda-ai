@@ -1,14 +1,21 @@
 import os
-from fastapi import FastAPI, HTTPException
+import openai
+from dotenv import load_dotenv
+from typing import Annotated
+
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from lambda_ai.api_models import (
     CreateTableRequest,
     CreateToolRequest,
     QueryToolRequest,
+    LoginRequest,
     DeleteToolRequest,
     DeleteDatabaseRequest,
 )
+
 from lambda_ai.database.crud.api_container import (
     create_api_environment,
     create_api_file,
@@ -25,23 +32,31 @@ from lambda_ai.database.crud.api_function import (
     update_api_function,
 )
 from lambda_ai.database.crud.db import create_db, delete_db, get_all_dbs, get_db
+from lambda_ai.database.crud.table import (
+    create_table as create_db_table,
+    get_all_tables_by_db,
+    delete_table,
+)
+from lambda_ai.database.crud.user import (
+    create_user,
+    get_user_from_email,
+    get_user_from_session,
+)
+
 from lambda_ai.database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
 from lambda_ai.database.schemas.api_function import APIFunctionCreate
 from lambda_ai.database.schemas.db import DBCreate
 from lambda_ai.database.schemas.table import TableCreate
+from lambda_ai.database.schemas.user import CreateUser
+
 from lambda_ai.lambdaai.apis import APIFunction
 from lambda_ai.database.main import db_session
 from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
-from lambda_ai.database.crud.table import (
-    create_table as create_db_table,
-    delete_table,
-    get_all_tables_by_db,
-)
-from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
-from dotenv import load_dotenv
-import openai
 
-from lambda_ai.lambdaai.utils import generate_slug
+from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
+
+
+from lambda_ai.lambdaai.utils import generate_slug, parse_bearer_token
 
 
 # running on app startup.
@@ -62,12 +77,25 @@ app.add_middleware(
 
 
 @app.post("/create_tool")
-def create_tool(request: CreateToolRequest):
+def create_tool(
+    request: CreateToolRequest, authorization: Annotated[str | None, Header()] = None
+):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     # FIXME: paths are a mess
     # how do we define path: user-id + function name?
-    fake_user_id = "/xyz_123_abc_789"
+    # Michael: won't pass .isidentifier() with user-int(int) first... supplied a temp fix.
+    authed_user_id = authed_user.id
     slug_name = generate_slug(request.tool.name)
-    built_path = fake_user_id + "/" + slug_name
+    built_path = "user" + str(authed_user_id) + "/" + slug_name
 
     testcases = [testcase.model_dump() for testcase in request.testcases]
 
@@ -83,6 +111,7 @@ def create_tool(request: CreateToolRequest):
         force_use_db=False,
         is_async=False,
         attached_db=request.tool.selectedDatabase,
+        user_id=authed_user_id,
     )
 
     with db_session() as session:
@@ -96,9 +125,9 @@ def create_tool(request: CreateToolRequest):
                 attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
             else:
                 print("Attempted to attach a database that was not found")
-                raise HTTPException(
-                    status_code=500,
-                    detail="Attempted to attach a database that was not found",
+                return JSONResponse(
+                    {"error": "Attempted to attach a database that was not found"},
+                    status_code=400,
                 )
     else:
         attached_db = None
@@ -121,7 +150,9 @@ def create_tool(request: CreateToolRequest):
         print(message)
         with db_session():
             delete_api_function(session, api_obj_id)
-        raise HTTPException(status_code=500, detail=f"Failed to build tool: {message}")
+        return JSONResponse(
+            {"error": f"Failed to build tool: {message}"}, status_code=500
+        )
 
     api_function_created = {
         "api_function_created": new_api_function.api_function_created
@@ -138,7 +169,9 @@ def create_tool(request: CreateToolRequest):
     # FIXME: we have to get rid of these classes. Pass in schemas instead,
     #        and use the database in the core lambdaai directory.
     with db_session() as session:
-        envs = get_all_api_environments(session)
+        envs = get_all_api_environments(
+            session, authed_user_id
+        )  # gets only authed users envs
     if envs:
         master_env = envs[0]
         with db_session() as session:
@@ -209,6 +242,7 @@ def create_tool(request: CreateToolRequest):
             file_path=api_file.file_path,
             functions=transformed_function,
             attach_db=attached_db is not None,
+            user_id=authed_user_id,
         )
 
         with db_session() as session:
@@ -220,6 +254,7 @@ def create_tool(request: CreateToolRequest):
             requirements_file=api_env.requirements_file,
             is_live=api_env.is_live,
             server_process_id=api_env.server_process_id,
+            user_id=authed_user_id,
         )
         with db_session() as session:
             create_api_environment(session, env_schema)
@@ -235,11 +270,24 @@ def create_tool(request: CreateToolRequest):
 
 
 @app.post("/create_database")
-def create_database(request: CreateTableRequest):
+def create_database(
+    request: CreateTableRequest, authorization: Annotated[str | None, Header()] = None
+):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     new_database = DBCreate(
         name=request.name,
         slug_name=generate_slug(request.name),
         location=DEFAULT_DB_PATH,
+        user_id=authed_user.id,
     )
     with db_session() as session:
         db_obj = create_db(session, new_database)
@@ -247,11 +295,23 @@ def create_database(request: CreateTableRequest):
 
 
 @app.post("/create_table")
-def create_table(request: CreateTableRequest):
+def create_table(
+    request: CreateTableRequest, authorization: Annotated[str | None, Header()] = None
+):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     # temporarily call create_database when we want to make a new table
-    db_id = create_database(request)
+    db_id = create_database(request, authorization)
     with db_session() as session:
-        db_obj = get_db(session, db_id)
+        db_obj = get_db(session, db_id, authed_user.id)
         db = DB(name=db_obj.slug_name, location=db_obj.location, replace_existing=True)
 
     # transform the columns because TableCreate takes a dict of columns
@@ -291,9 +351,19 @@ def create_table(request: CreateTableRequest):
 
 
 @app.get("/get_tools")
-def get_tools():
+def get_tools(authorization: Annotated[str | None, Header()] = None):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        tools = get_api_functions(session)
+        tools = get_api_functions(session, authed_user.id)
 
     tools_list = []
     for tool in tools:
@@ -311,9 +381,19 @@ def get_tools():
 
 
 @app.get("/get_databases")
-def get_databases():
+def get_databases(authorization: Annotated[str | None, Header()] = None):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        dbs = get_all_dbs(session)
+        dbs = get_all_dbs(session, authed_user.id)
 
         dbs_list = []
         for db in dbs:
@@ -341,9 +421,19 @@ def get_databases():
 # this is a temporary function to get all the tables
 # in the future, tables in the UI will be part of a database
 @app.get("/get_tables")
-def get_tables():
+def get_tables(authorization: Annotated[str | None, Header()] = None):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        dbs = get_all_dbs(session)
+        dbs = get_all_dbs(session, authed_user.id)
 
         master_tables_list = []
         for db in dbs:
@@ -363,25 +453,49 @@ def get_tables():
 
 
 @app.post("/query_tool")
-def query_tool(request: QueryToolRequest):
+def query_tool(
+    request: QueryToolRequest, authorization: Annotated[str | None, Header()] = None
+):
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        envs = get_all_api_environments(session)
-        master_env = envs[0]
-        master_file = get_api_file(session, master_env.api_file_id)
+        envs = get_all_api_environments(session, authed_user.id)
+
+        if not envs:
+            return JSONResponse({"error": "No tools to query."}, status_code=400)
+
+        # REVIEW: Not using master env anymore bcuz getting only user owned envs.
+        # But, doesn't matter what env is used... can query any tool from
+        # any API as long as tool is live. If user owns no envs, they haven't deployed
+        # any tools so we can return error.
+        first_env_found = envs[0]
+        first_file_found = get_api_file(session, first_env_found.api_file_id)
+
     # FIXME: the following code is awful. This is a dummy api_file that
     # we have to create so that we can instantiate the APIEnv.
     api_file = APIFile(
-        master_file.slug_name,
-        master_file.file_path,
-        master_file.attach_db,
+        first_file_found.slug_name,
+        first_file_found.file_path,
+        first_file_found.attach_db,
         pulling_old=True,
     )
     api_env = APIEnvironment(
-        api_file, master_env.host, master_env.port, master_env.is_live
+        api_file, first_env_found.host, first_env_found.port, first_env_found.is_live
     )
 
     with db_session() as session:
-        tool = get_api_function(session, request.id)
+        tool = get_api_function(session, request.id, authed_user.id)
+
+    if not tool:
+        return {"error": "Unable to query requested tool."}
 
     e, response = api_env.query(tool.path, request.inputs)
 
@@ -391,23 +505,140 @@ def query_tool(request: QueryToolRequest):
         return {"error": e}
 
 
+@app.post("/register")
+def register(request: CreateUser):
+    # create new user in database
+    try:
+        with db_session() as db:
+            new_user = create_user(db=db, user=request)
+
+    except Exception:
+        return JSONResponse({"error": "Email alrady in use."}, status_code=400)
+
+    new_user_return = {
+        "first_name": new_user.first_name,
+        "last_name": new_user.last_name,
+        "email": new_user.email,
+        "id": new_user.id,
+    }
+
+    response = JSONResponse(new_user_return)
+
+    # Pass back session ID as a cookie for browser to store
+    session_id = new_user.session_id
+    response.set_cookie(  # TODO: Add safety params for prod environment
+        key="session_id",
+        value=session_id,
+        path="/",
+        # secure=True,
+        # httponly=True,
+        # samesite='strict'
+    )
+
+    return response
+
+
+# FIXME: Code is kinda ugly, probs could be redone better. Later.
+# NOTE: If logging in with bearer token, must send LoginRequest with blank email and pass fields.
+@app.get("/login")
+def login(request: LoginRequest, authorization: Annotated[str | None, Header()] = None):
+    user = None
+
+    if authorization:
+        session_id = parse_bearer_token(authorization)
+
+        with db_session() as db:
+            user = get_user_from_session(db, session_id)
+
+    if not user:
+        with db_session() as db:
+            user = get_user_from_email(db=db, email=request.email)
+
+        if not user:
+            return JSONResponse(
+                {"error": "Incorrect username and password"}, status_code=400
+            )
+
+    user_return = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "id": user.id,
+    }
+
+    response = JSONResponse(user_return)
+
+    if not authorization:
+        session_id = user.session_id
+        response.set_cookie(  # TODO: Add safety params for prod environment
+            key="session_id",
+            value=session_id,
+            path="/",
+            # secure=True,
+            # httponly=True,
+            # samesite='strict'
+        )
+
+    return response
+
+
 @app.delete("/delete_tool")
-def delete_tool(request: DeleteToolRequest):
+def delete_tool(
+    request: DeleteToolRequest, authorization: Annotated[str | None, Header()] = None
+):
     # this doesn't actually delete the tool, it just removes it from the database
     # with the backend refactor, it will make it possible to actually delete the tool code too.
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        delete_api_function(session, request.id)
+        requested_api_function = get_api_function(session, request.id, authed_user.id)
+
+        if not requested_api_function:
+            return JSONResponse(
+                {"error": "Unable to delete requested tool."}, status_code=400
+            )
+
+        delete_api_function(session, request.id, authed_user.id)
 
     return {"message": "success"}
 
 
 @app.delete("/delete_database")
-def delete_database(request: DeleteDatabaseRequest):
+def delete_database(
+    request: DeleteDatabaseRequest,
+    authorization: Annotated[str | None, Header()] = None,
+):
     # this doesn't actually delete the sqlite file. Will do this with the refactor
+    session_id = parse_bearer_token(authorization)
+
+    with db_session() as db:
+        authed_user = get_user_from_session(db, session_id)
+
+    if not authed_user:
+        return JSONResponse(
+            {"error": "Authentication credentials invalid."}, status_code=400
+        )
+
     with db_session() as session:
-        attached_tables = get_all_tables_by_db(session, request.id)
+        # verify that user owns db requested
+        requested_db = get_db(session, request.id, authed_user.id)
+
+        if not requested_db:
+            return JSONResponse(
+                {"error": "Unable to delete requested database."}, status_code=400
+            )
+
+        attached_tables = get_all_tables_by_db(session, requested_db.id)
         for table in attached_tables:
             delete_table(session, table.id)
-        delete_db(session, request.id)
+        delete_db(session, requested_db.id)
 
     return {"message": "success"}
