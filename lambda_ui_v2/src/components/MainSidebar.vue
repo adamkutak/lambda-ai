@@ -75,7 +75,8 @@ export default {
 <style scoped>
 .sidebar {
     width: 240px;
-    height: calc(100vh - 19px);
+    height: 100%;
+    /* height: calc(100vh - 19px); */
     background-color: #2c3e50;
     overflow-y: auto;
 }
