@@ -124,6 +124,17 @@ class FunctionCallTestWithDB(FunctionCallTest):
     )
 
 
+class SQLGeneration(BaseModel):
+    pre_sql: List[str] = Field(
+        ...,
+        description="A list of valid SQL statements. Each is a valid SQL you wish to run before the function is tested.",
+    )
+    post_sql: List[PostSql] = Field(
+        ...,
+        description="list of the SQL checks you would want to run to verify the endpoint updated the attached database correctly.",
+    )
+
+
 FUNCTION_CALLING_ENDPOINT_CREATION = {
     "name": "create_api",
     "description": "Create a new API endpoint and test it. If an error occurs during testing, the error will be returned to you.",
@@ -140,4 +151,10 @@ FUNCTION_CALLING_TEST_CREATION_DB_EXT = {
     "name": "add_test",
     "description": "Create a new test case to be run on a FastAPI endpoint",
     "parameters": FunctionCallTestWithDB.model_json_schema(),
+}
+
+FUNCTION_CALLING_SQL_GENERATION = {
+    "name": "create_sql",
+    "description": "Create SQL statements to setup a database for testing and to verify that a database was updated correctly after testing.",
+    "parameters": SQLGeneration.model_json_schema(),
 }

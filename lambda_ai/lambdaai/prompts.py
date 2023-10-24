@@ -238,3 +238,51 @@ Sample of Table Items rows:
 (400, 'Pineapple', 15, 3.41)
 
 """
+
+
+ONE_SHOT_SQL_GENERATION_USER = """
+Your goal is to translate natural language description of database operations into valid SQL code. The SQL you generate be valid SQL.
+A description of the database table will be provided. You are to only create SQL statements that interact with the columns provided in the database description.
+
+
+This is the natural language to translate:
+The database should start with 3 rows of random food names. Set the prices based on the food name's average world price. Set all quantities to 100.
+After a test case is run, check to see if the quantity of the apples went down 10. 
+
+Here is the description of the database:
+Database name: table_items
+Number of columns: 4
+Column descriptions:
+- item_id: INTEGER
+  - PRIMARY KEY constraint
+- name: VARCHAR(255)
+  - NOT NULL constraint
+- quantity: INTEGER
+  - NOT NULL constraint
+- price: FLOAT
+  - NOT NULL constraint"""
+
+ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS = {
+    "pre_sql": [
+        "INSERT INTO table_items\nVALUES (1, bananas, 100, 1.00)",
+        "INSERT INTO table_items\nVALUES (2, apples, 100, 2.00)",
+        "INSERT INTO table_items\nVALUES (3, pears, 100, 2.25)",
+    ],
+    "post_sql": [
+        {
+            "sql": "SELECT quantity\nFROM table_items\nWHERE item_id=2",
+            "assert_value": "90",
+        }
+    ],
+}
+
+SQL_GENERATION_PROMPT = """
+Your goal is to translate natural language description of database operations into valid SQL code. The SQL you generate be valid SQL.
+A description of the database table will be provided. You are to only create SQL statements that interact with the columns provided in the database description.
+
+
+This is the natural language to translate:
+{nat_lang_description}
+
+Here is the description of the database:
+{db_details}"""
