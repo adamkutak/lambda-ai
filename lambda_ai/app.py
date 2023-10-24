@@ -3,7 +3,7 @@ import openai
 from dotenv import load_dotenv
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import Cookie, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -39,6 +39,7 @@ from lambda_ai.database.crud.table import (
 )
 from lambda_ai.database.crud.user import (
     create_user,
+    get_all_users,
     get_user_from_email,
     get_user_from_session,
 )
@@ -54,8 +55,6 @@ from lambda_ai.database.main import db_session
 from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
 
 from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
-
-
 from lambda_ai.lambdaai.utils import generate_slug, parse_bearer_token
 
 
@@ -67,9 +66,15 @@ def onstartup():
 
 onstartup()
 app = FastAPI()
+# use this to specify the possible frontend addresses.
+# this is required for sending secure cookies
+origins = [
+    "http://localhost:8080",  # localhost testing
+    "https://yourfrontenddomain.com",  # future front end domain address
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -77,10 +82,8 @@ app.add_middleware(
 
 
 @app.post("/create_tool")
-def create_tool(
-    request: CreateToolRequest, authorization: Annotated[str | None, Header()] = None
-):
-    session_id = parse_bearer_token(authorization)
+def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -270,10 +273,8 @@ def create_tool(
 
 
 @app.post("/create_database")
-def create_database(
-    request: CreateTableRequest, authorization: Annotated[str | None, Header()] = None
-):
-    session_id = parse_bearer_token(authorization)
+def create_database(request: CreateTableRequest, session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -295,12 +296,11 @@ def create_database(
 
 
 @app.post("/create_table")
-def create_table(
-    request: CreateTableRequest, authorization: Annotated[str | None, Header()] = None
-):
-    session_id = parse_bearer_token(authorization)
+def create_table(request: CreateTableRequest, session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
+        breakpoint()
         authed_user = get_user_from_session(db, session_id)
 
     if not authed_user:
@@ -309,7 +309,7 @@ def create_table(
         )
 
     # temporarily call create_database when we want to make a new table
-    db_id = create_database(request, authorization)
+    db_id = create_database(request, session_id)
     with db_session() as session:
         db_obj = get_db(session, db_id, authed_user.id)
         db = DB(name=db_obj.slug_name, location=db_obj.location, replace_existing=True)
@@ -351,8 +351,8 @@ def create_table(
 
 
 @app.get("/get_tools")
-def get_tools(authorization: Annotated[str | None, Header()] = None):
-    session_id = parse_bearer_token(authorization)
+def get_tools(session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -381,8 +381,8 @@ def get_tools(authorization: Annotated[str | None, Header()] = None):
 
 
 @app.get("/get_databases")
-def get_databases(authorization: Annotated[str | None, Header()] = None):
-    session_id = parse_bearer_token(authorization)
+def get_databases(session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -421,8 +421,8 @@ def get_databases(authorization: Annotated[str | None, Header()] = None):
 # this is a temporary function to get all the tables
 # in the future, tables in the UI will be part of a database
 @app.get("/get_tables")
-def get_tables(authorization: Annotated[str | None, Header()] = None):
-    session_id = parse_bearer_token(authorization)
+def get_tables(session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -453,10 +453,8 @@ def get_tables(authorization: Annotated[str | None, Header()] = None):
 
 
 @app.post("/query_tool")
-def query_tool(
-    request: QueryToolRequest, authorization: Annotated[str | None, Header()] = None
-):
-    session_id = parse_bearer_token(authorization)
+def query_tool(request: QueryToolRequest, session_id: str = Cookie(None)):
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -510,10 +508,11 @@ def register(request: CreateUser):
     # create new user in database
     try:
         with db_session() as db:
+            get_all_users
             new_user = create_user(db=db, user=request)
 
     except Exception:
-        return JSONResponse({"error": "Email alrady in use."}, status_code=400)
+        return JSONResponse({"error": "Email already in use."}, status_code=400)
 
     new_user_return = {
         "first_name": new_user.first_name,
@@ -531,25 +530,24 @@ def register(request: CreateUser):
         value=session_id,
         path="/",
         # secure=True,
-        # httponly=True,
+        httponly=True,
         # samesite='strict'
     )
 
     return response
 
 
-# FIXME: Code is kinda ugly, probs could be redone better. Later.
 # NOTE: If logging in with bearer token, must send LoginRequest with blank email and pass fields.
-@app.get("/login")
-def login(request: LoginRequest, authorization: Annotated[str | None, Header()] = None):
+@app.post("/login")
+def login(request: LoginRequest, session_id: str = Cookie(None)):
     user = None
-
-    if authorization:
-        session_id = parse_bearer_token(authorization)
+    if session_id:
+        session_id = parse_bearer_token(session_id)
 
         with db_session() as db:
             user = get_user_from_session(db, session_id)
 
+    # breakpoint()
     if not user:
         with db_session() as db:
             user = get_user_from_email(db=db, email=request.email)
@@ -568,27 +566,25 @@ def login(request: LoginRequest, authorization: Annotated[str | None, Header()] 
 
     response = JSONResponse(user_return)
 
-    if not authorization:
-        session_id = user.session_id
-        response.set_cookie(  # TODO: Add safety params for prod environment
-            key="session_id",
-            value=session_id,
-            path="/",
-            # secure=True,
-            # httponly=True,
-            # samesite='strict'
-        )
+    response.set_cookie(  # TODO: Add safety params for prod environment
+        key="session_id",
+        value=user.session_id,
+        path="/",
+        # secure=True,
+        httponly=True,
+        # samesite='strict'
+    )
+
+    # breakpoint()
 
     return response
 
 
 @app.delete("/delete_tool")
-def delete_tool(
-    request: DeleteToolRequest, authorization: Annotated[str | None, Header()] = None
-):
+def delete_tool(request: DeleteToolRequest, session_id: str = Cookie(None)):
     # this doesn't actually delete the tool, it just removes it from the database
     # with the backend refactor, it will make it possible to actually delete the tool code too.
-    session_id = parse_bearer_token(authorization)
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)
@@ -614,10 +610,10 @@ def delete_tool(
 @app.delete("/delete_database")
 def delete_database(
     request: DeleteDatabaseRequest,
-    authorization: Annotated[str | None, Header()] = None,
+    session_id: str = Cookie(None),
 ):
     # this doesn't actually delete the sqlite file. Will do this with the refactor
-    session_id = parse_bearer_token(authorization)
+    session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
         authed_user = get_user_from_session(db, session_id)

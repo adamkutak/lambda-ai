@@ -97,10 +97,17 @@ export default {
             console.log(requestData);
 
             // Assuming you will send the requestData to your backend using Axios or some other method
-            axios.post(process.env.VUE_APP_BACKEND_URL + '/create_table', requestData)
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
+                }
+            };
+            axios.post(process.env.VUE_APP_BACKEND_URL + '/create_table', requestData, config)
                 .then(response => {
                     console.log(response.data);
                     GlobalState.addDatabase(response.data.table)
+                    this.$router.push('/databases');  // <-- Redirect on success
                 })
                 .catch(error => {
                     console.error('Error posting data:', error);
