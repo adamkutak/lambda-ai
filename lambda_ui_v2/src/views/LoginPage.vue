@@ -27,7 +27,6 @@ export default {
       const config = {
           headers: {
               'Content-Type': 'application/json',
-              // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
           }
       };
       const login_data = {

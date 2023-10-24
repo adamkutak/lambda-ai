@@ -46,11 +46,31 @@
   </template>
   
   <script>
+  import axios from 'axios';
   export default {
     name: 'LandingPage',
     methods: {
-      redirectToLogin() {
-        this.$router.push('/login');
+      async redirectToLogin() {
+        const config = {
+          headers: {
+              'Content-Type': 'application/json',
+          }
+        };
+        try {
+          const login_data = {
+            email: '',
+            password: ''
+          };
+          const response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/login', login_data, config);
+          if (response.status==200) {
+            this.$router.push('/tools');
+          } else {
+            this.$router.push('/login');
+          }
+        } catch (error) {
+          console.error('session_id not authenticated');
+          this.$router.push('/login');
+        }
       },
       redirectToRegister() {
         this.$router.push('/register');

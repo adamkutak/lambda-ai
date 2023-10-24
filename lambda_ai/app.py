@@ -3,7 +3,7 @@ import openai
 from dotenv import load_dotenv
 from typing import Annotated
 
-from fastapi import Cookie, FastAPI, Header
+from fastapi import Cookie, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -297,10 +297,10 @@ def create_database(request: CreateTableRequest, session_id: str = Cookie(None))
 
 @app.post("/create_table")
 def create_table(request: CreateTableRequest, session_id: str = Cookie(None)):
-    breakpoint()
     session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
+        breakpoint()
         authed_user = get_user_from_session(db, session_id)
 
     if not authed_user:
@@ -508,6 +508,7 @@ def register(request: CreateUser):
     # create new user in database
     try:
         with db_session() as db:
+            get_all_users
             new_user = create_user(db=db, user=request)
 
     except Exception:
@@ -536,7 +537,6 @@ def register(request: CreateUser):
     return response
 
 
-# FIXME: Code is kinda ugly, probs could be redone better. Later.
 # NOTE: If logging in with bearer token, must send LoginRequest with blank email and pass fields.
 @app.post("/login")
 def login(request: LoginRequest, session_id: str = Cookie(None)):
@@ -547,6 +547,7 @@ def login(request: LoginRequest, session_id: str = Cookie(None)):
         with db_session() as db:
             user = get_user_from_session(db, session_id)
 
+    # breakpoint()
     if not user:
         with db_session() as db:
             user = get_user_from_email(db=db, email=request.email)
@@ -565,16 +566,16 @@ def login(request: LoginRequest, session_id: str = Cookie(None)):
 
     response = JSONResponse(user_return)
 
-    if not session_id:
-        session_id = user.session_id
-        response.set_cookie(  # TODO: Add safety params for prod environment
-            key="session_id",
-            value=session_id,
-            path="/",
-            # secure=True,
-            httponly=True,
-            # samesite='strict'
-        )
+    response.set_cookie(  # TODO: Add safety params for prod environment
+        key="session_id",
+        value=user.session_id,
+        path="/",
+        # secure=True,
+        httponly=True,
+        # samesite='strict'
+    )
+
+    # breakpoint()
 
     return response
 
