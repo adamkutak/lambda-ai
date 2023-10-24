@@ -1,7 +1,9 @@
+import datetime
 from sqlalchemy.orm import Session
-from lambda_ai.database.models.user import UserModel
-from lambda_ai.database.schemas.user import CreateUser, User
-from lambda_ai.lambdaai.utils import unsafe_session_id
+from database.models.user import UserModel
+from database.schemas.user import CreateUser, User
+import hashlib
+from datetime import datetime
 
 
 def create_user(db: Session, user: CreateUser):
@@ -71,3 +73,13 @@ def delete_user(db: Session, user_id: int) -> bool:
     db.commit()
 
     return True
+
+
+def unsafe_session_id(rand_str: str):
+    date = datetime.now()
+    timestamp_str = str(datetime.timestamp(date))
+
+    data = (timestamp_str + rand_str).encode()
+    hash = hashlib.sha256(data).hexdigest()
+
+    return hash

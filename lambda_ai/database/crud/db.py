@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from lambda_ai.database.models.api_function import APIFunctionModel
-from lambda_ai.database.models.db import DBModel
-from lambda_ai.database.schemas.db import DBCreate
+from database.models.api_function import APIFunctionModel
+from database.models.db import DBModel
+from database.schemas.db import DBCreate
 
 
 def create_db(db: Session, db_data: DBCreate):

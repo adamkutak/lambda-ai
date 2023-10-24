@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from lambda_ai.api_models import (
+from api_models import (
     CreateTableRequest,
     CreateToolRequest,
     QueryToolRequest,
@@ -16,7 +16,7 @@ from lambda_ai.api_models import (
     DeleteDatabaseRequest,
 )
 
-from lambda_ai.database.crud.api_container import (
+from database.crud.api_container import (
     create_api_environment,
     create_api_file,
     get_all_api_environments,
@@ -24,39 +24,39 @@ from lambda_ai.database.crud.api_container import (
     update_api_environment,
     update_api_file,
 )
-from lambda_ai.database.crud.api_function import (
+from database.crud.api_function import (
     create_api_function,
     delete_api_function,
     get_api_function,
     get_api_functions,
     update_api_function,
 )
-from lambda_ai.database.crud.db import create_db, delete_db, get_all_dbs, get_db
-from lambda_ai.database.crud.table import (
+from database.crud.db import create_db, delete_db, get_all_dbs, get_db
+from database.crud.table import (
     create_table as create_db_table,
     get_all_tables_by_db,
     delete_table,
 )
-from lambda_ai.database.crud.user import (
+from database.crud.user import (
     create_user,
     get_user_from_email,
     get_user_from_session,
 )
 
-from lambda_ai.database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
-from lambda_ai.database.schemas.api_function import APIFunctionCreate
-from lambda_ai.database.schemas.db import DBCreate
-from lambda_ai.database.schemas.table import TableCreate
-from lambda_ai.database.schemas.user import CreateUser
+from database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
+from database.schemas.api_function import APIFunctionCreate
+from database.schemas.db import DBCreate
+from database.schemas.table import TableCreate
+from database.schemas.user import CreateUser
 
-from lambda_ai.lambdaai.apis import APIFunction
-from lambda_ai.database.main import db_session
-from lambda_ai.lambdaai.db import DB, DEFAULT_DB_PATH
+from lambdaai.apis import APIFunction
+from database.main import db_session
+from lambdaai.db import DB, DEFAULT_DB_PATH
 
-from lambda_ai.lambdaai.environment import APIEnvironment, APIFile
+from lambdaai.environment import APIEnvironment, APIFile
 
 
-from lambda_ai.lambdaai.utils import generate_slug, parse_bearer_token
+from lambdaai.utils import generate_slug, parse_bearer_token
 
 
 # running on app startup.
@@ -220,7 +220,7 @@ def create_tool(
         master_env = None
         api_file = APIFile(
             name="master_env_file",
-            file_path="lambda_ai/generated_tools",
+            file_path="generated_tools",
             attach_db=attached_db is not None,
         )
         api_file.add_function(new_api_function.api_function_created)

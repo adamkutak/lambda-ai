@@ -1,7 +1,7 @@
 from pydantic import ConfigDict
 from sqlalchemy import Column, Integer, String, Boolean, JSON, ForeignKey
 from sqlalchemy.orm import relationship
-from lambda_ai.database.base import Base
+from database.base import Base
 
 
 class APIFunctionModel(Base):
