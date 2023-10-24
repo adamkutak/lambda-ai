@@ -4,15 +4,55 @@
       <h1 class="app-title">TextTool.</h1>
       <h2>Login</h2>
       <router-link to="/register" class="register-link">Or go here to create an Account</router-link>
-      <input type="text" placeholder="Username" />
-      <input type="password" placeholder="Password" />
-      <button class="login-btn">Login</button>
+      <input v-model="email" type="text" placeholder="email" />
+      <input v-model="password" type="password" placeholder="Password" />
+      <button @click="submitLogin" class="login-btn">Login</button>
       <router-link to="/" class="home-link">Back to Home</router-link>
     </div>
   </div>
 </template>
 
-  
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      email: '',
+      password: ''
+    }
+  },
+  methods: {
+    async submitLogin() {
+      const config = {
+          headers: {
+              'Content-Type': 'application/json',
+              // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
+          }
+      };
+      const login_data = {
+        email: this.email,
+        password: this.password
+      }
+      try {
+        console.log(login_data)
+        const response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/login', login_data, config);
+        console.log(response)
+        if (response.status==200) {
+          this.$router.push('/tools');
+        } else {
+          // Handle failed login, e.g., showing an error message
+          alert('Login failed. Please check your credentials and try again.');
+        }
+      } catch (error) {
+        console.error('An error occurred while trying to login:', error);
+        alert('An error occurred. Try again.');
+      }
+    }
+  }
+}
+</script>
+
 <style scoped>
 /* Using Roboto font from the landing page for consistency */
 .login-page {
