@@ -107,6 +107,7 @@ export default {
                 .then(response => {
                     console.log(response.data);
                     GlobalState.addDatabase(response.data.table)
+                    this.$router.push('/databases');  // <-- Redirect on success
                 })
                 .catch(error => {
                     console.error('Error posting data:', error);
