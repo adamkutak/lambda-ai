@@ -3,19 +3,75 @@
     <div class="register-card">
       <h1 class="app-title">TextTool.</h1>
       <h2>Register</h2>
-      <router-link to="/login" class="login-link">Already have an account? Login here</router-link>
+      <router-link to="/login" class="register-link">Already have an account? Login here</router-link>
 
-      <input type="text" placeholder="Full Name" />
-      <input type="email" placeholder="Email" />
-      <input type="password" placeholder="Password" />
-      <input type="password" placeholder="Retype Password" />
-      <button class="register-btn">Register</button>
+      <div class="name-container">
+        <input v-model="first_name" type="text" placeholder="First Name" class="first-name" />
+        <input v-model="last_name" type="text" placeholder="Last Name" class="last-name" />
+      </div>
+      <input v-model="email" type="email" placeholder="Email" />
+      <input v-model="password" type="password" placeholder="Password" />
+      <input v-model="retyped_password" type="password" placeholder="Retype Password" />
+      <p :class="{ 'error-message': true, 'invisible': !passwordMismatch }">Passwords don't match</p>
+      <button @click="submitRegister" class="register-btn">Register</button>
       <router-link to="/" class="home-link">Back to Home</router-link>
     </div>
   </div>
 </template>
 
-  
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      retyped_password: ''
+    }
+  },
+  computed: {
+    passwordMismatch() {
+      return this.password && this.retyped_password && this.password !== this.retyped_password;
+    }
+  },
+  methods: {
+    async submitRegister() {
+      if (this.password !== this.retyped_password) {
+        alert('Passwords do not match.');
+        return; // Early return if passwords don't match
+      }
+
+      const config = {
+          headers: {
+              'Content-Type': 'application/json',
+          }
+      };
+      const register_data = {
+        first_name: this.first_name,
+        last_name: this.last_name,
+        email: this.email,
+        password: this.password,
+      }
+      try {
+        const response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/register', register_data, config);
+        console.log(response)
+        if (response.status==200) {
+          this.$router.push('/tools');
+        } else {
+          // Handle failed register, e.g., showing an error message
+          alert('Registration failed. Please check your credentials and try again.');
+        }
+      } catch (error) {
+        console.error('An error occurred while trying to register:', error);
+        alert('An error occurred. Try again.');
+      }
+    }
+  }
+}
+</script>
 <style scoped>
 /* Using Roboto font from the landing page for consistency */
 .register-page {
@@ -26,7 +82,16 @@
   height: 100vh;
   background-color: #f5f5f5; /* A light background for contrast with the card */
 }
+.name-container {
+  display: flex;
+  gap: 10px; /* Adjust this value based on your liking for the space between the two name input fields */
+}
 
+.first-name, .last-name {
+  flex: 1; /* Makes sure both input fields take equal width */
+  box-sizing: border-box; /* Ensures padding is included in width calculations */
+  width: calc(50% - 5px); /* Accounts for half the gap */
+}
 .register-card {
   width: 320px; /* Width of the card */
   padding: 20px;
@@ -83,7 +148,7 @@ button.register-btn {
       color: #757575;
   }
 }
-.login-link {
+.register-link {
   display: block;
   margin-bottom: 15px; /* Adds some space below the link */
   text-align: center; /* Centers the text in the link */
@@ -94,6 +159,16 @@ button.register-btn {
   &:hover {
       color: #757575;
   }
+}.error-message {
+  color: red;
+  font-size: 12px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  height: 12px; /* This reserves space for one line of the error message */
+  overflow: hidden; /* Just in case */
+}
+
+.invisible {
+  visibility: hidden;
 }
 </style>
-  
