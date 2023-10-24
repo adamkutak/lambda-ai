@@ -55,11 +55,11 @@ Bug: I need to track which ports are live, servers need some way of ensuring the
 First iteration MVP:
 - Get Frontend calls to backend working (DONE)
 - name slugging for user inputs (DONE)
-- add user authentication/management
-- add landing page with login screen
+- add user authentication/management (DONE)
+- add landing page with login screen (DONE)
 - figure out deployment (possible issues with core tech)
-- user can't test SQL in UI
-- ?? ability to delete/undeploy things ??
+- user can't test SQL in UI (IN PROGRESS)
+- ability to delete/undeploy things (DONE)
 --------------------------------
 Second Iteration MVP:
 - refactor backend classes
@@ -81,7 +81,3 @@ AUTH BRANCH
   [✅] Environments
 - update FastAPI routes to extract bearer token ✅ QA
 - check for bearer token for fast-tracked login in /login route ✅ QA
-
-
-
-
