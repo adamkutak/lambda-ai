@@ -39,7 +39,7 @@ class DB:
     def add_table(
         self,
         name: str,
-        columns: dict,
+        columns: dict,  # TODO: Add a schema for column shape
     ):
         assert name.isidentifier()
         assert name not in self.table_names
