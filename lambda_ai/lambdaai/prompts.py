@@ -18,6 +18,11 @@ This is the description of the endpoint function:
 
 The function decorator and definition must be the following:
 {function_def}
+
+An expert software designer included some information
+about one potential way to write this function. However, 
+if you believe it is incorrect, you can ignore it:
+{line_by_line}
 """
 
 
@@ -28,7 +33,7 @@ Review the original instructions, and modify your output based on the error:
 
 Do not include any apology message or other useless text.
 Make sure your function decorator and definition match the one specified in the original message.
-
+{analysis}
 """
 
 ONE_SHOT_PROMPT_USER = """
@@ -139,6 +144,11 @@ If using a sql SELECT statement, the return value of execute_sql is a list of tu
 If you need to run multiple queries, put each query in a seperate execute_sql() call.
 Do not try to import the execute_sql function. Assume it exists and is usable already.
 Careful with variable types when calling SQL. For strings, they need to be wrapped in ''
+
+An expert software designer included some information
+about one potential way to write this function. However, 
+if you believe it is incorrect, you can ignore it:
+{line_by_line}
 """
 
 ONE_SHOT_PROMPT_FUNCTION_ARGS = {
@@ -237,4 +247,54 @@ Sample of Table Items rows:
 (300, 'Apple', 600, 3.59)
 (400, 'Pineapple', 15, 3.41)
 
+"""
+
+CHAIN_OF_THOUGHT_REASONING = """
+You are an expert reasoner and designer.
+Given a description of a function that should be built (and its input and outputs), 
+give back a line by line description in natural language of how to build it. 
+The description you provide will be given to an engineer to code in Python.
+Each line should be simple and not too cmompounded. If each line tries to do too much,
+the engineer will get overwhelmed by the description and fail to build it.
+Only return the line by line description in natural language.
+
+The inputs are: {inputs}
+The outputs are: {outputs}
+
+The description is:
+{functionality}
+"""
+
+
+CHAIN_OF_THOUGHT_REASONING_WITH_DB = """
+You are an expert reasoner and software architect.
+Given a description of a function that should be built (and its input and outputs), 
+give back a line by line description in natural language of how to build it. 
+The description you provide will be given to an engineer to code in Python.
+Each line should be simple and not too compounded. If each line tries to do too much,
+the engineer will get overwhelmed by the description and fail to build it.
+Only return the line by line description in natural language.
+
+The inputs are: {inputs}
+The outputs are: {outputs}
+
+The description is:
+{functionality}
+
+There is also a database. The function may need to make use of it. 
+The database has the following tables:
+{table_list}
+"""
+
+
+ERROR_ANALYSIS = """
+Our team ran the following python function in FastAPI:
+{function_code}
+
+It gave us back the following error: {error}
+
+The error exists in the code. Explain in natural language what the error is. 
+This will be passed back to the developer to be fixed. If you don't know 
+the error, say that you don't know. Don't make one up. 
+Assume that the error is internal to the function.
 """
