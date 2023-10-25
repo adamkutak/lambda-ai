@@ -112,10 +112,12 @@ def create_tool(
                     status_code=400,
                 )
 
+        breakpoint()
         sql_gen_agent = SQLGenAgent(attached_db)
 
         for tc in testcases:
             if tc["sqltest"]:
+                breakpoint()
                 pre_and_post_sql = sql_gen_agent.generate_sql(
                     pre_sql=tc["sqltest"]["pre_sql"],
                     post_sql=tc["sqltest"]["post_sql"],
@@ -130,6 +132,7 @@ def create_tool(
     else:
         attached_db = None
 
+    breakpoint()
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
         name=request.tool.name,

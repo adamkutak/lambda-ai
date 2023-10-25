@@ -266,14 +266,28 @@ Table inventory has 4 columns:
 
 ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS = {
     "pre_sql": [
-        "INSERT INTO inventory VALUES (1, bananas, 100, 1.00)",
-        "INSERT INTO inventory VALUES (2, apples, 100, 2.00)",
-        "INSERT INTO inventory VALUES (3, pears, 100, 2.25)",
+        "INSERT INTO inventory (item_id, name, quantity, price) VALUES (1, bananas, 100, 1.00)",
+        "INSERT INTO inventory (item_id, name, quantity, price) VALUES (2, apples, 100, 2.00)",
+        "INSERT INTO inventory (item_id, name, quantity, price) VALUES (3, pears, 100, 1.25)",
     ],
     "post_sql": [
         {
-            "sql": "SELECT quantity FROM inventory WHERE item_id=2;",
+            "sql": "SELECT quantity FROM inventory WHERE item_id=2",
             "assert_value": "90",
+        }
+    ],
+}
+
+ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2 = {
+    "pre_sql": [
+        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('Michael', true, 'mj@gmail.com', 1)",
+        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('James', false, 'coolj@hotmail.com', 2)",
+        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('Adam', true, 'doubleaagent@gmail.com', 3)",
+    ],
+    "post_sql": [
+        {
+            "sql": "SELECT COUNT(*) FROM customers WHERE verified = true",
+            "assert_value": "2",
         }
     ],
 }

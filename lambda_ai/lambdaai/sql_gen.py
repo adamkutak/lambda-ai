@@ -6,8 +6,9 @@
 
 from .gpt_management import openAIchat
 from .prompts import (
-    ONE_SHOT_SQL_GENERATION_USER,
+    # ONE_SHOT_SQL_GENERATION_USER,
     ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
+    ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
     SQL_GENERATION_PROMPT,
 )
 from .gpt_function_calls import FUNCTION_CALLING_SQL_GENERATION, SQLGeneration
@@ -30,8 +31,14 @@ class SQLGenAgent:
 
         ai_chat.add_function_one_shot_prompt(
             name="create_sql",
-            input_data=ONE_SHOT_SQL_GENERATION_USER,
+            input_data="",
             output_data=ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
+        )
+
+        ai_chat.add_function_one_shot_prompt(
+            name="create_sql",
+            input_data="",
+            output_data=ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
         )
 
         db_details = self.database.view_db_details()
@@ -50,7 +57,6 @@ class SQLGenAgent:
             )
 
             if result_code < 1:
-                breakpoint()
                 return data
 
         return None

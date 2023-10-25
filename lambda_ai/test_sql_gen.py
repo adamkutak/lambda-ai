@@ -70,18 +70,18 @@ def test_sql_2():
         },
     }
 
-    test_db.add_table("inventory", table_columns)
+    test_db.add_table("customers", customer_columns)
 
     print("--------------------------------------------")
-    print(test_db.view_table_details("inventory"))
+    print(test_db.view_table_details("customers"))
 
     sql_agent = SQLGenAgent(test_db)
-    pre_sql = "Before the test, the database should have only one row that contains 10000 of widget1."
-    post_sql = "After the test is run, there should be 9999 of widget1."
+    pre_sql = "Before the test, the database should have only one row with a customer named bob. Make up the rest of the details for the row."
+    post_sql = "After the test is run, check to see if bobs name was changed to james."
     res = sql_agent.generate_sql(pre_sql, post_sql)
 
     print("--------------------------------------------")
     print(f"SQLAgent Response: {res}")
 
 
-test_sql_1()
+test_sql_2()
