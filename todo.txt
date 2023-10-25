@@ -14,9 +14,9 @@ Add support for making databases, to create stateful APIs (v1 done)
 fix error: Internal Server Error. make it return the error to the AI. (v1 done)
 Use Chain of thought reasoning for more complex functions. (v1 done)
 analyzing errors with a specialized AI instance? "explain what went wrong in this code with this error msg. (v1 done)
+String quotations for the sql is the most common mistake even gpt-4 constantly makes (fixed using one-shot prompt examples)
 
 TODO (generation improvement features):
-String quotations for the sql is the most common mistake even gpt-4 constantly makes
 enforcing standard set of rules: standardizing error or out of bound value handling. "always return None if the data is not found" for example.
 Break functions down into smaller components: turn long functions into smaller functions?? (just an idea)
 AI has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
