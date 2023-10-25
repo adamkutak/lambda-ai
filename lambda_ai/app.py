@@ -55,8 +55,6 @@ from database.main import db_session
 from lambdaai.db import DB, DEFAULT_DB_PATH
 
 from lambdaai.environment import APIEnvironment, APIFile
-
-
 from lambdaai.utils import generate_slug, parse_bearer_token
 
 
@@ -302,6 +300,7 @@ def create_table(request: CreateTableRequest, session_id: str = Cookie(None)):
     session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
+        breakpoint()
         authed_user = get_user_from_session(db, session_id)
 
     if not authed_user:
@@ -548,6 +547,7 @@ def login(request: LoginRequest, session_id: str = Cookie(None)):
         with db_session() as db:
             user = get_user_from_session(db, session_id)
 
+    # breakpoint()
     if not user:
         with db_session() as db:
             user = get_user_from_email(db=db, email=request.email)
