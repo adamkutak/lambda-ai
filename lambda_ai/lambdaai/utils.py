@@ -29,6 +29,8 @@ def generate_fastapi_definition(
 
     input_def = ", ".join(input_def_list)
 
+    if not path.startswith("/"):
+        path = "/" + path
     decorator = f"@app.get('{path}')"
     function = (
         f"{'async ' if is_async else ''}def {name}({input_def}) -> Dict[str, Any]:\n"

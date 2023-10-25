@@ -297,4 +297,5 @@ The error exists in the code. Explain in natural language what the error is.
 This will be passed back to the developer to be fixed. If you don't know 
 the error, say that you don't know. Don't make one up. 
 Assume that the error is internal to the function.
+Also, execute_sql function is not the problem. It is valid.
 """

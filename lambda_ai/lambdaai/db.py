@@ -124,6 +124,10 @@ class DB:
         return new_function_code
 
     def create_testing_copy(self):
+        try:
+            os.remove(self.test_db_path)
+        except:
+            pass
         test_db = sqlite3.connect(self.test_db_path)
         file_db = sqlite3.connect(self.path)
 

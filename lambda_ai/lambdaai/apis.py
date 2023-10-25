@@ -122,6 +122,7 @@ class APIFunction:
                 else "",
             )
 
+        print(prompt)
         ai_response = ai_chat.send_chat(
             message=prompt,
             function_call="create_api",
@@ -141,9 +142,10 @@ class APIFunction:
 
             if result_code > 0:
                 if self.use_error_analysis and result_code < 2:
-                    analysis = f"The following analysis might be useful to you: {self.analyse_error(data)}"
+                    analysis = f"The following analysis might be useful to you:\n{self.analyse_error(data)}"
                 else:
                     analysis = ""
+                print(analysis)
                 ai_response = ai_chat.send_chat(
                     message=ON_CREATE_ERROR.format(error=data, analysis=analysis),
                     function_call="create_api",
@@ -162,7 +164,7 @@ class APIFunction:
             EndpointCreation,
         )
         if validate_json > 0:
-            return 1, data
+            return 2, data
 
         imports = data["imports"]
         function = data["endpoint"]
@@ -170,7 +172,7 @@ class APIFunction:
         if self.attached_db:
             if self.force_use_db and "execute_sql" not in function:
                 return (
-                    1,
+                    2,
                     "Error: you must make use of the database in this function, the info for which you have been given already.",
                 )
             function = self.attached_db.insert_db_path_into_function_exec_calls(
@@ -209,18 +211,19 @@ class APIFunction:
 
     def breakdown_description(self) -> str:
         ai_chat = openAIchat(
-            system_message="Only return the line by line of how to construct the function."
+            # model="gpt-4",
+            system_message="Only return the line by line of how to construct the function.",
         )
 
         if self.attached_db:
-            prompt = CHAIN_OF_THOUGHT_REASONING_WITH_DB(
+            prompt = CHAIN_OF_THOUGHT_REASONING_WITH_DB.format(
                 inputs=str(self.inputs),
                 outputs=str(self.outputs),
                 functionality=self.functionality,
                 table_list=self.attached_db.view_db_details(),
             )
         else:
-            prompt = CHAIN_OF_THOUGHT_REASONING(
+            prompt = CHAIN_OF_THOUGHT_REASONING.format(
                 inputs=str(self.inputs),
                 outputs=str(self.outputs),
                 functionality=self.functionality,
@@ -234,15 +237,15 @@ class APIFunction:
 
     def analyse_error(self, error: str) -> str:
         ai_chat = openAIchat(
-            system_message="Only return a description of why you believe there is an error in the function."
+            # model="gpt-4",
+            system_message="Only return a description of why you believe there is an error in the function.",
         )
 
-        prompt = ERROR_ANALYSIS(
-            function_code=self.api_function_created["function_code"]
+        prompt = ERROR_ANALYSIS.format(
+            function_code=self.api_function_created["function_code"], error=error
         )
         ai_response = ai_chat.send_chat(
             message=prompt,
-            error=error,
         )
 
         return ai_response
