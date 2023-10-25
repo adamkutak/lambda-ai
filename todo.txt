@@ -95,10 +95,13 @@ goal: when a user creates a new tool they
       the setup statement, the post-run query, and post-run state given a test
       case.
 
-- Create new one shot user prompt, one shot assistant reply prompt, and user prompt (lambdaai/prompts.py)
-- Create new function call (lambdaai/gpt_function_calls.py)
-- sql_gen.py
+Future Improvements
+- could have an /generate_sql route so that CreateToolRequest isn't so bloated
+- sql generation could get added directly to the APIFunction class since it already holds
+  the testcases
 
-Qs:
-- where do we store this sql info?
-  - right now we store the test-cases in the APIFunction Model
+
+Oct 24th:
+- Prompt is always using the name example name 'inventory' for insert statement.
+  [ ] Is it passing in the inventory table instead of the table in CreateToolRequest?
+  [ ] Update prompt to be more specific about using table specified in db_details

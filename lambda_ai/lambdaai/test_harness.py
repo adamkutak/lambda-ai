@@ -43,7 +43,6 @@ class TestHarness:
             if test_db:
                 test_db.create_testing_copy()
                 pre_sql_queries = test_case.get("pre_sql", [])
-                breakpoint()
                 for query in pre_sql_queries:
                     execute_sql(test_db.test_db_path, query)
             error_message = None

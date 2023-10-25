@@ -29,7 +29,9 @@ class DB:
 
         # TODO: temporarily removing existing file for ease of use...
         if replace_existing:
-            curr_dbs_at_path = os.listdir(location)
+            curr_dbs_at_path = os.listdir(
+                location
+            )  # NOTE: Must be run from lambda_ai dir
             if db_name in curr_dbs_at_path:
                 os.remove(self.path)
             curr_dbs_at_test_path = os.listdir(location + "/test_dbs")

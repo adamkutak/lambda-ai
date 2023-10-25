@@ -17,8 +17,8 @@ class PostSQL(BaseModel):
 
 
 class TestCaseSQLCheck(BaseModel):
-    pre_sql: List[str]
-    post_sql: List[PostSQL]
+    pre_sql: str
+    post_sql: str
 
 
 class TestCase(BaseModel):
@@ -54,14 +54,13 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-      
+
 class DeleteToolRequest(BaseModel):
     id: int
 
-      
+
 class DeleteDatabaseRequest(BaseModel):
     id: int
-
 
 
 # print(json.dumps(CreateToolRequest.model_json_schema(), indent=2))

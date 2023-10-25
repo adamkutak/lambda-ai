@@ -50,6 +50,7 @@ from database.schemas.table import TableCreate
 from database.schemas.user import CreateUser
 
 from lambdaai.apis import APIFunction
+from lambdaai.sql_gen import SQLGenAgent
 from database.main import db_session
 from lambdaai.db import DB, DEFAULT_DB_PATH
 
@@ -99,6 +100,36 @@ def create_tool(
 
     testcases = [testcase.model_dump() for testcase in request.testcases]
 
+    if request.tool.selectedDatabase:
+        with db_session() as session:
+            db_obj = get_db(session, request.tool.selectedDatabase, authed_user.id)
+            if db_obj:
+                attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
+            else:
+                print("Attempted to attach a database that was not found")
+                return JSONResponse(
+                    {"error": "Attempted to attach a database that was not found"},
+                    status_code=400,
+                )
+
+        sql_gen_agent = SQLGenAgent(attached_db)
+
+        for tc in testcases:
+            if tc["sqltest"]:
+                pre_and_post_sql = sql_gen_agent.generate_sql(
+                    pre_sql=tc["sqltest"]["pre_sql"],
+                    post_sql=tc["sqltest"]["post_sql"],
+                )
+
+                # add new sql to existing test case in testcases list
+                if pre_and_post_sql:
+                    tc["sqltest"] = pre_and_post_sql  # NOTE:
+
+                # TODO: Add some error handling when SQL generation fails
+
+    else:
+        attached_db = None
+
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
         name=request.tool.name,
@@ -117,27 +148,6 @@ def create_tool(
     with db_session() as session:
         api_function_obj = create_api_function(session, new_function)
         api_obj_id = api_function_obj.id
-
-    if request.tool.selectedDatabase:
-        with db_session() as session:
-            db_obj = get_db(session, request.tool.selectedDatabase)
-            if db_obj:
-                attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
-            else:
-                print("Attempted to attach a database that was not found")
-                return JSONResponse(
-                    {"error": "Attempted to attach a database that was not found"},
-                    status_code=400,
-                )
-
-        # TODO: convert testcase natural language query into SQL for each testcase if present.
-        converted_testcases = []
-        for tc in testcases:
-            # implement generation of sql database checks from natural language descriptions
-            converted_testcases.append(tc)
-
-    else:
-        attached_db = None
 
     # now we try to generate the API function.
     new_api_function = APIFunction(
