@@ -575,8 +575,6 @@ def login(request: LoginRequest, session_id: str = Cookie(None)):
         # samesite='strict'
     )
 
-    # breakpoint()
-
     return response
 
 

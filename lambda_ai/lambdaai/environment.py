@@ -209,7 +209,7 @@ class APIEnvironment:
     def query(self, path, input):
         try:
             response = requests.get(
-                f"http://{self.host}:{self.port}/{path}",  # REVIEW: Adding / after port. This means APIFunction.path should not have a / as its starting char.
+                f"http://{self.host}:{self.port}/{path}",
                 params=input,
             )
         except Exception as e:
