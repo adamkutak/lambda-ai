@@ -17,7 +17,8 @@ analyzing errors with a specialized AI instance? "explain what went wrong in thi
 
 TODO (generation improvement features):
 String quotations for the sql is the most common mistake even gpt-4 constantly makes
-Break functions down into smaller components: turn long functions into smaller functions
+enforcing standard set of rules: standardizing error or out of bound value handling. "always return None if the data is not found" for example.
+Break functions down into smaller components: turn long functions into smaller functions?? (just an idea)
 AI has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
   - it tries to make highly compounded sql, which causes it to get things slightly wrong or miss a minor instruction
 If the user is generating functions frequently with the same database, we could also add few-shot prompts of the past openai calls that worked correctly.

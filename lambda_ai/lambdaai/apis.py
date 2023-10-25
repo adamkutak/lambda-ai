@@ -6,10 +6,9 @@ from .prompts import (
     CREATE_ENDPOINT_WITH_DB,
     ERROR_ANALYSIS,
     ON_CREATE_ERROR,
-    ONE_SHOT_PROMPT_USER,
     ONE_SHOT_PROMPT_FUNCTION_ARGS,
-    ONE_SHOT_PROMPT_USER_WITH_DB,
     ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS,
+    ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS_2,
 )
 from .gpt_function_calls import (
     FUNCTION_CALLING_ENDPOINT_CREATION,
@@ -36,7 +35,7 @@ class APIFunction:
         attached_db: DB = None,
         force_use_db: bool = False,
         use_line_by_line: bool = True,
-        use_error_analysis: bool = True,
+        use_error_analysis: bool = False,
     ):
         self.name = name
         self.path = path
@@ -91,8 +90,13 @@ class APIFunction:
         if self.attached_db:
             ai_chat.add_function_one_shot_prompt(
                 "create_api",
-                ONE_SHOT_PROMPT_USER_WITH_DB,
+                None,
                 ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS,
+            )
+            ai_chat.add_function_one_shot_prompt(
+                "create_api",
+                None,
+                ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS_2,
             )
             prompt = CREATE_ENDPOINT_WITH_DB.format(
                 name=self.name,
@@ -108,7 +112,7 @@ class APIFunction:
             )
         else:
             ai_chat.add_function_one_shot_prompt(
-                "create_api", ONE_SHOT_PROMPT_USER, ONE_SHOT_PROMPT_FUNCTION_ARGS
+                "create_api", None, ONE_SHOT_PROMPT_FUNCTION_ARGS
             )
             prompt = CREATE_ENDPOINT.format(
                 name=self.name,

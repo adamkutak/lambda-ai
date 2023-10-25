@@ -67,8 +67,9 @@ class openAIchat:
         input_data,
         output_data,
     ):
-        user_message = {"role": "user", "content": input_data}
-        self.messages.append(user_message)
+        if input_data:
+            user_message = {"role": "user", "content": input_data}
+            self.messages.append(user_message)
 
         function_call_response = {
             "role": "assistant",

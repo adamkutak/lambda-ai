@@ -592,8 +592,8 @@ def test_basic_with_database_1_autogenerate_tests():
     os.remove(my_test_db.path)
 
 
-# test_basic_1()
-# test_basic_2()
+test_basic_1()
+test_basic_2()
 # test_create_multiple_in_live_file()
 test_basic_with_database_1()
 test_basic_with_database_2()
