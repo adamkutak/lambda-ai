@@ -53,17 +53,15 @@ export default {
   
 <style scoped>
 .tools-page {
-    padding: 10px;
-    font-family: 'Arial', sans-serif;
-    background-color: #f5f5f5;
+    padding: 20px;
+    width: 80%;
 }
 
 .header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    position: relative;
-    /* To position the button absolutely relative to this container */
+    margin-bottom: 20px;
 }
 
 h1 {
@@ -73,28 +71,28 @@ h1 {
 }
 
 .tools-container {
-    overflow-y: auto;
-    height: 90vh;
-    border-radius: 5px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-height: calc(100vh - 119px);
+    width: 100%;
+    overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0;
 }
 
 th,
 td {
-    padding: 10px 15px;
-    border: 1px solid #ddd;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e0e0e0;
 }
-
-th {
-    background-color: #f0f0f0;
+td {
+    cursor: pointer;
+}
+td:last-child {
+    text-align: right;
+    border: none;
+    width: 1%;
+    white-space: nowrap;
 }
 
 tr:hover {
@@ -112,17 +110,12 @@ router-link:hover {
 }
 
 .create-btn {
-    position: absolute;
-    right: 20px;
-    /* 20px from the right edge */
-    padding: 10px 20px;
     background-color: #3498db;
-    color: #fff;
-    border: none;
+    padding: 10px 20px;
     border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    color: white;
     text-decoration: none;
+    transition: background-color 0.3s;
 }
 
 .create-btn:hover {
