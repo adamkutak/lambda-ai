@@ -16,7 +16,7 @@ def test_basic_1():
     for i in range(repetition):
         api_function = APIFunction(
             "subtract_quantity_xx",
-            "/tests/set1/",
+            "tests/set1/",
             {
                 "item_id": "int",
                 "status": "bool",
@@ -70,6 +70,7 @@ def test_basic_1():
         print(api_function.build_attempts)
         print(result_message)
         build_result_list.append(api_function.build_attempts)
+        print(api_function.usage)
 
     print(build_result_list)
 
@@ -89,7 +90,7 @@ Use the math library in this function.
     for i in range(repetition):
         api_function = APIFunction(
             "specific_power",
-            "/tests/set2/",
+            "tests/set2/",
             {
                 "ability": "str",
                 "exponent": "float",
@@ -126,6 +127,7 @@ Use the math library in this function.
         print(api_function.build_attempts)
         print(result_message)
         build_result_list.append(api_function.build_attempts)
+        print(api_function.usage)
 
     print(build_result_list)
 
@@ -139,7 +141,7 @@ Use numpy's matrix functionality to speed up computation time.
     for i in range(repetition):
         api_function = APIFunction(
             "elipse_area_calc",
-            "/tests/elipse_calc/",
+            "tests/elipse_calc/",
             {
                 "height": "float",
                 "width": "float",
@@ -185,16 +187,17 @@ Use numpy's matrix functionality to speed up computation time.
         print(api_function.build_attempts)
         print(result_message)
         build_result_list.append(api_function.build_attempts)
+        print(api_function.usage)
 
     print(build_result_list)
 
 
 def test_create_multiple_in_live_file():
-    master_api_file = APIFile("my_end_points_test_1", "generated_apis")
+    master_api_file = APIFile("my_end_points_test_1", "generated_tools")
 
     api_function_1 = APIFunction(
         "subtract_quantity",
-        "/tests/set1/",
+        "tests/set1/",
         {
             "item_id": "int",
             "status": "bool",
@@ -259,7 +262,7 @@ Use the math library in this function.
     ]
     api_function_2 = APIFunction(
         "specific_power",
-        "/tests/set2/",
+        "tests/set2/",
         {
             "ability": "str",
             "exponent": "float",
@@ -308,19 +311,19 @@ def test_basic_with_database_1():
     my_test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
     table_1_columns = {
         "item_id": {
-            "type": "INTEGER",
+            "type": "int",
             "constraints": ["PRIMARY KEY"],
         },
         "name": {
-            "type": "VARCHAR(255)",
+            "type": "str",
             "constraints": ["NOT NULL"],
         },
         "quantity": {
-            "type": "INTEGER",
+            "type": "int",
             "constraints": ["NOT NULL"],
         },
         "price": {
-            "type": "FLOAT",
+            "type": "float",
             "constraints": ["NOT NULL"],
         },
     }
@@ -334,7 +337,7 @@ def test_basic_with_database_1():
 
     api_function_1 = APIFunction(
         "sell_quantity",
-        "/tests/sell_quantity/",
+        "tests/sell_quantity/",
         {
             "item_id": "int",
             "status": "bool",
@@ -385,8 +388,11 @@ def test_basic_with_database_1():
             },
         ],
         attached_db=my_test_db,
+        # use_line_by_line=False,
+        # use_error_analysis=False,
     )
     api_function_1.create_api_function()
+    print(api_function_1.usage)
     os.remove(my_test_db.path)
 
 
@@ -394,23 +400,23 @@ def test_basic_with_database_2():
     my_test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
     table_1_columns = {
         "ship_id": {
-            "type": "INTEGER",
+            "type": "int",
             "constraints": ["PRIMARY KEY"],
         },
         "country": {
-            "type": "VARCHAR(255)",
+            "type": "str",
             "constraints": ["NOT NULL"],
         },
         "weight": {
-            "type": "FLOAT",
+            "type": "float",
             "constraints": ["NOT NULL"],
         },
         "num_guns": {
-            "type": "INTEGER",
+            "type": "int",
             "constraints": ["NOT NULL"],
         },
         "num_crew": {
-            "type": "INTEGER",
+            "type": "int",
             "constraints": ["NOT NULL"],
         },
     }
@@ -424,7 +430,7 @@ def test_basic_with_database_2():
 
     api_function_1 = APIFunction(
         "add_crew_to_navy",
-        "/tests/add_crew/",
+        "tests/add_crew/",
         {
             "country": "str",
             "active": "bool",
@@ -473,8 +479,11 @@ def test_basic_with_database_2():
             },
         ],
         attached_db=my_test_db,
+        # use_line_by_line=False,
+        # use_error_analysis=False,
     )
     api_function_1.create_api_function()
+    print(api_function_1.usage)
     os.remove(my_test_db.path)
 
 
@@ -484,7 +493,7 @@ def test_basic_1_autogenerate_tests():
     for i in range(repetition):
         api_function = APIFunction(
             "subtract_quantity",
-            "/tests/set1/",
+            "tests/set1/",
             {
                 "item_id": "int",
                 "status": "bool",
@@ -519,7 +528,7 @@ Use the math library in this function.
     for i in range(repetition):
         api_function = APIFunction(
             "specific_power",
-            "/tests/set2/",
+            "tests/set2/",
             {
                 "ability": "str",
                 "exponent": "float",
@@ -589,10 +598,10 @@ def test_basic_with_database_1_autogenerate_tests():
 
 
 test_basic_1()
-# test_basic_2()
+test_basic_2()
 # test_create_multiple_in_live_file()
-# test_basic_with_database_1()
-# test_basic_with_database_2()
+test_basic_with_database_1()
+test_basic_with_database_2()
 # test_basic_1_autogenerate_tests()
 # test_basic_2_autogenerate_tests()
 # test_basic_with_database_1_autogenerate_tests()

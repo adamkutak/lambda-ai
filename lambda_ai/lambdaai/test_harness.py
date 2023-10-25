@@ -2,7 +2,7 @@ import os
 from .apis import APIFunction
 from .environment import APIEnvironment, APIFile
 from .gpt_management import openAIchat
-from .prompts import (
+from .unused_prompts import (
     AUTO_TESTER_DATABASE_EXT,
     AUTO_TESTER_ON_ERROR,
     AUTO_TESTER_ONESHOT_ARGS,
@@ -11,7 +11,6 @@ from .prompts import (
 )
 from .gpt_function_calls import (
     FUNCTION_CALLING_TEST_CREATION,
-    FUNCTION_CALLING_ENDPOINT_CREATION,
     FUNCTION_CALLING_TEST_CREATION_DB_EXT,
     FunctionCallTest,
     FunctionCallTestWithDB,

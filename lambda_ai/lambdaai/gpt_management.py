@@ -8,12 +8,13 @@ MAX_MESSAGE_CHAR_LENGTH = 3000
 class openAIchat:
     def __init__(
         self,
-        model: str = "gpt-3.5-turbo-0613",
+        model: str = None,
         system_message: str = None,
-        functions: dict = None,
+        functions: list = None,
     ):
-        self.model = model
+        self.model = model if model else "gpt-3.5-turbo-0613"
         self.messages = []
+        self.usage = {"prompt_tokens": 0, "completion_tokens": 0}
 
         if system_message:
             self.messages.append(
@@ -25,7 +26,7 @@ class openAIchat:
 
         self.functions = functions
 
-    def send_chat(self, message, function_call) -> str:
+    def send_chat(self, message, function_call=None) -> str:
         if function_call:
             try_to_call_function = {"name": function_call}
         else:
@@ -40,15 +41,23 @@ class openAIchat:
             }
         )
 
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages,
-            functions=self.functions,
-            function_call=try_to_call_function,
-        )
+        if function_call:
+            response = openai.ChatCompletion.create(
+                model=self.model,
+                messages=self.messages,
+                functions=self.functions,
+                function_call=try_to_call_function,
+            )
+        else:
+            response = openai.ChatCompletion.create(
+                model=self.model,
+                messages=self.messages,
+            )
 
         message = response.choices[0].message
         self.messages.append(message)
+        self.usage["prompt_tokens"] += response.usage.prompt_tokens
+        self.usage["completion_tokens"] += response.usage.completion_tokens
 
         if function_call:
             return message.get("function_call")
@@ -61,8 +70,9 @@ class openAIchat:
         input_data,
         output_data,
     ):
-        user_message = {"role": "user", "content": input_data}
-        self.messages.append(user_message)
+        if input_data:
+            user_message = {"role": "user", "content": input_data}
+            self.messages.append(user_message)
 
         function_call_response = {
             "role": "assistant",

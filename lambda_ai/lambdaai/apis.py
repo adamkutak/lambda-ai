@@ -1,12 +1,14 @@
 from .environment import APIFile
 from .prompts import (
+    CHAIN_OF_THOUGHT_REASONING,
+    CHAIN_OF_THOUGHT_REASONING_WITH_DB,
     CREATE_ENDPOINT,
     CREATE_ENDPOINT_WITH_DB,
+    ERROR_ANALYSIS,
     ON_CREATE_ERROR,
-    ONE_SHOT_PROMPT_USER,
     ONE_SHOT_PROMPT_FUNCTION_ARGS,
-    ONE_SHOT_PROMPT_USER_WITH_DB,
     ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS,
+    ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS_2,
 )
 from .gpt_function_calls import (
     FUNCTION_CALLING_ENDPOINT_CREATION,
@@ -32,6 +34,9 @@ class APIFunction:
         is_async: bool = None,
         attached_db: DB = None,
         force_use_db: bool = False,
+        use_line_by_line: bool = True,
+        use_error_analysis: bool = False,
+        use_gpt4: bool = False,
     ):
         self.name = name
         self.path = path
@@ -44,6 +49,13 @@ class APIFunction:
         self.api_function_created = {}
         self.attached_db = attached_db
         self.force_use_db = force_use_db
+        self.use_line_by_line = use_line_by_line
+        self.use_error_analysis = use_error_analysis
+        self.usage = {"prompt_tokens": 0, "completion_tokens": 0}
+        if use_gpt4:
+            self.model = "gpt-4"
+        else:
+            self.model = None
 
     def create_api_function(self) -> str:
         from .test_harness import TestHarness
@@ -76,7 +88,7 @@ class APIFunction:
         )
 
         ai_chat = openAIchat(
-            # model="gpt-4",
+            model=self.model,
             system_message="Only use the functions you have been provided with.",  # noqa
             functions=[FUNCTION_CALLING_ENDPOINT_CREATION],
         )
@@ -84,8 +96,13 @@ class APIFunction:
         if self.attached_db:
             ai_chat.add_function_one_shot_prompt(
                 "create_api",
-                ONE_SHOT_PROMPT_USER_WITH_DB,
+                None,
                 ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS,
+            )
+            ai_chat.add_function_one_shot_prompt(
+                "create_api",
+                None,
+                ONE_SHOT_PROMPT_WITH_DB_FUNCTION_ARGS_2,
             )
             prompt = CREATE_ENDPOINT_WITH_DB.format(
                 name=self.name,
@@ -95,10 +112,13 @@ class APIFunction:
                 functionality=self.functionality,
                 function_def=function_def,
                 table_list=self.attached_db.view_db_details(),
+                line_by_line=self.breakdown_description()
+                if self.use_line_by_line
+                else "",
             )
         else:
             ai_chat.add_function_one_shot_prompt(
-                "create_api", ONE_SHOT_PROMPT_USER, ONE_SHOT_PROMPT_FUNCTION_ARGS
+                "create_api", None, ONE_SHOT_PROMPT_FUNCTION_ARGS
             )
             prompt = CREATE_ENDPOINT.format(
                 name=self.name,
@@ -107,8 +127,12 @@ class APIFunction:
                 outputs=str(self.outputs),
                 functionality=self.functionality,
                 function_def=function_def,
+                line_by_line=self.breakdown_description()
+                if self.use_line_by_line
+                else "",
             )
 
+        print(prompt)
         ai_response = ai_chat.send_chat(
             message=prompt,
             function_call="create_api",
@@ -127,15 +151,19 @@ class APIFunction:
                 print(f"testing is {result_code}: {data}")
 
             if result_code > 0:
+                if self.use_error_analysis and result_code < 2:
+                    analysis = f"The following analysis might be useful to you:\n{self.analyse_error(data)}"
+                else:
+                    analysis = ""
+                print(analysis)
                 ai_response = ai_chat.send_chat(
-                    message=ON_CREATE_ERROR.format(error=data),
+                    message=ON_CREATE_ERROR.format(error=data, analysis=analysis),
                     function_call="create_api",
                 )
                 self.build_attempts[-1] += 1
 
-        if result_code > 0:
-            return result_code, data
-
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
         return result_code, data
 
     def process_and_validate_response(self, ai_response) -> (int, str):
@@ -145,7 +173,7 @@ class APIFunction:
             EndpointCreation,
         )
         if validate_json > 0:
-            return 1, data
+            return 2, data
 
         imports = data["imports"]
         function = data["endpoint"]
@@ -153,7 +181,7 @@ class APIFunction:
         if self.attached_db:
             if self.force_use_db and "execute_sql" not in function:
                 return (
-                    1,
+                    2,
                     "Error: you must make use of the database in this function, the info for which you have been given already.",
                 )
             function = self.attached_db.insert_db_path_into_function_exec_calls(
@@ -162,6 +190,7 @@ class APIFunction:
             test_function = self.attached_db.insert_db_path_into_function_exec_calls(
                 test_function, for_test=True
             )
+
         print(function)
 
         self.api_function_created = {
@@ -188,3 +217,50 @@ class APIFunction:
 
         self.format_file = format_file
         return 0, format_file
+
+    def breakdown_description(self) -> str:
+        ai_chat = openAIchat(
+            model=self.model,
+            system_message="Only return the line by line of how to construct the function.",
+        )
+
+        if self.attached_db:
+            prompt = CHAIN_OF_THOUGHT_REASONING_WITH_DB.format(
+                inputs=str(self.inputs),
+                outputs=str(self.outputs),
+                functionality=self.functionality,
+                table_list=self.attached_db.view_db_details(),
+            )
+        else:
+            prompt = CHAIN_OF_THOUGHT_REASONING.format(
+                inputs=str(self.inputs),
+                outputs=str(self.outputs),
+                functionality=self.functionality,
+            )
+
+        ai_response = ai_chat.send_chat(
+            message=prompt,
+        )
+
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
+
+        return ai_response
+
+    def analyse_error(self, error: str) -> str:
+        ai_chat = openAIchat(
+            model=self.model,
+            system_message="Only return a description of why you believe there is an error in the function.",
+        )
+
+        prompt = ERROR_ANALYSIS.format(
+            function_code=self.api_function_created["function_code"], error=error
+        )
+        ai_response = ai_chat.send_chat(
+            message=prompt,
+        )
+
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
+
+        return ai_response
