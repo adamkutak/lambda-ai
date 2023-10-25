@@ -83,7 +83,7 @@ class APIFunction:
         )
 
         ai_chat = openAIchat(
-            # model="gpt-4",
+            model="gpt-4",
             system_message="Only use the functions you have been provided with.",  # noqa
             functions=[FUNCTION_CALLING_ENDPOINT_CREATION],
         )
@@ -211,7 +211,7 @@ class APIFunction:
 
     def breakdown_description(self) -> str:
         ai_chat = openAIchat(
-            # model="gpt-4",
+            model="gpt-4",
             system_message="Only return the line by line of how to construct the function.",
         )
 
@@ -237,7 +237,7 @@ class APIFunction:
 
     def analyse_error(self, error: str) -> str:
         ai_chat = openAIchat(
-            # model="gpt-4",
+            model="gpt-4",
             system_message="Only return a description of why you believe there is an error in the function.",
         )
 
