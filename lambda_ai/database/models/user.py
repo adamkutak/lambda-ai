@@ -12,6 +12,8 @@ class UserModel(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String)
     session_id = Column(String(128), unique=True, nullable=False)
+    prompt_token_usage = Column(Integer, default=0)
+    completion_token_usage = Column(Integer, default=0)
 
     # relationships
     databases = relationship("DBModel", back_populates="owner")

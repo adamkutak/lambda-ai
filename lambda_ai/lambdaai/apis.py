@@ -36,6 +36,7 @@ class APIFunction:
         force_use_db: bool = False,
         use_line_by_line: bool = True,
         use_error_analysis: bool = False,
+        use_gpt4: bool = False,
     ):
         self.name = name
         self.path = path
@@ -50,6 +51,11 @@ class APIFunction:
         self.force_use_db = force_use_db
         self.use_line_by_line = use_line_by_line
         self.use_error_analysis = use_error_analysis
+        self.usage = {"prompt_tokens": 0, "completion_tokens": 0}
+        if use_gpt4:
+            self.model = "gpt-4"
+        else:
+            self.model = None
 
     def create_api_function(self) -> str:
         from .test_harness import TestHarness
@@ -82,7 +88,7 @@ class APIFunction:
         )
 
         ai_chat = openAIchat(
-            model="gpt-4",
+            model=self.model,
             system_message="Only use the functions you have been provided with.",  # noqa
             functions=[FUNCTION_CALLING_ENDPOINT_CREATION],
         )
@@ -156,9 +162,8 @@ class APIFunction:
                 )
                 self.build_attempts[-1] += 1
 
-        if result_code > 0:
-            return result_code, data
-
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
         return result_code, data
 
     def process_and_validate_response(self, ai_response) -> (int, str):
@@ -215,7 +220,7 @@ class APIFunction:
 
     def breakdown_description(self) -> str:
         ai_chat = openAIchat(
-            model="gpt-4",
+            model=self.model,
             system_message="Only return the line by line of how to construct the function.",
         )
 
@@ -237,11 +242,14 @@ class APIFunction:
             message=prompt,
         )
 
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
+
         return ai_response
 
     def analyse_error(self, error: str) -> str:
         ai_chat = openAIchat(
-            model="gpt-4",
+            model=self.model,
             system_message="Only return a description of why you believe there is an error in the function.",
         )
 
@@ -251,5 +259,8 @@ class APIFunction:
         ai_response = ai_chat.send_chat(
             message=prompt,
         )
+
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
 
         return ai_response

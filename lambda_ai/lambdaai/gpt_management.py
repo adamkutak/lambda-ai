@@ -8,12 +8,13 @@ MAX_MESSAGE_CHAR_LENGTH = 3000
 class openAIchat:
     def __init__(
         self,
-        model: str = "gpt-3.5-turbo-0613",
+        model: str = None,
         system_message: str = None,
         functions: list = None,
     ):
-        self.model = model
+        self.model = model if model else "gpt-3.5-turbo-0613"
         self.messages = []
+        self.usage = {"prompt_tokens": 0, "completion_tokens": 0}
 
         if system_message:
             self.messages.append(
@@ -55,6 +56,8 @@ class openAIchat:
 
         message = response.choices[0].message
         self.messages.append(message)
+        self.usage["prompt_tokens"] += response.usage.prompt_tokens
+        self.usage["completion_tokens"] += response.usage.completion_tokens
 
         if function_call:
             return message.get("function_call")

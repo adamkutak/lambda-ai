@@ -70,6 +70,7 @@ def test_basic_1():
         print(api_function.build_attempts)
         print(result_message)
         build_result_list.append(api_function.build_attempts)
+        print(api_function.usage)
 
     print(build_result_list)
 
@@ -126,6 +127,7 @@ Use the math library in this function.
         print(api_function.build_attempts)
         print(result_message)
         build_result_list.append(api_function.build_attempts)
+        print(api_function.usage)
 
     print(build_result_list)
 
@@ -185,6 +187,7 @@ Use numpy's matrix functionality to speed up computation time.
         print(api_function.build_attempts)
         print(result_message)
         build_result_list.append(api_function.build_attempts)
+        print(api_function.usage)
 
     print(build_result_list)
 
@@ -389,6 +392,7 @@ def test_basic_with_database_1():
         # use_error_analysis=False,
     )
     api_function_1.create_api_function()
+    print(api_function_1.usage)
     os.remove(my_test_db.path)
 
 
@@ -479,6 +483,7 @@ def test_basic_with_database_2():
         # use_error_analysis=False,
     )
     api_function_1.create_api_function()
+    print(api_function_1.usage)
     os.remove(my_test_db.path)
 
 

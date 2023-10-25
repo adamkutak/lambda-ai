@@ -53,7 +53,7 @@ def update_user(db: Session, user_id: int, **kwargs):
     if not user:
         return None
 
-    for key, value in kwargs:
+    for key, value in kwargs.items():
         if hasattr(user, key):
             setattr(user, key, value)
 
