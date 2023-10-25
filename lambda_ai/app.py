@@ -42,6 +42,7 @@ from database.crud.user import (
     get_all_users,
     get_user_from_email,
     get_user_from_session,
+    update_user,
 )
 
 from database.schemas.api_container import APIEnvironmentCreate, APIFileCreate
@@ -149,6 +150,16 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
     )
 
     result_code, message = new_api_function.create_api_function()
+
+    with db_session() as session:
+        token_usage = {
+            "prompt_token_usage": new_api_function.usage["prompt_tokens"]
+            + authed_user.prompt_token_usage,
+            "completion_token_usage": new_api_function.usage["completion_tokens"]
+            + authed_user.completion_token_usage,
+        }
+        update_user(session, authed_user_id, **token_usage)
+
     if result_code > 1:
         print(message)
         with db_session():
