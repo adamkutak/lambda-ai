@@ -12,14 +12,16 @@ automatically pip install the requirements. - DONE (builds requirements file for
 one-shot preprompting WITH databases - DONE
 Add support for making databases, to create stateful APIs (v1 done)
 fix error: Internal Server Error. make it return the error to the AI. (v1 done)
+Use Chain of thought reasoning for more complex functions. (v1 done)
+analyzing errors with a specialized AI instance? "explain what went wrong in this code with this error msg. (v1 done)
 
 TODO (generation improvement features):
-Use Chain of thought reasoning for more complex functions. Break them down into smaller components
-analyzing errors with a specialized AI instance? "explain what went wrong in this code with this error msg.
+String quotations for the sql is the most common mistake even gpt-4 constantly makes
+Break functions down into smaller components: turn long functions into smaller functions
 AI has trouble with somewhat simple database functions. Needs chain of thought and GPT-4
   - it tries to make highly compounded sql, which causes it to get things slightly wrong or miss a minor instruction
 If the user is generating functions frequently with the same database, we could also add few-shot prompts of the past openai calls that worked correctly.
-     - then, future output would be more likely to be correct. 
+     - then, future output would be more likely to be correct.
 
 TODO (auto testing):
 although we implemented a base version, it doesn't really work.
