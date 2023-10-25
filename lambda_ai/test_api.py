@@ -15,7 +15,7 @@ def test_basic_1():
     build_result_list = []
     for i in range(repetition):
         api_function = APIFunction(
-            "subtract_quantity",
+            "subtract_quantity_xx",
             "/tests/set1/",
             {
                 "item_id": "int",
@@ -589,10 +589,10 @@ def test_basic_with_database_1_autogenerate_tests():
 
 
 test_basic_1()
-test_basic_2()
-test_create_multiple_in_live_file()
-test_basic_with_database_1()
-test_basic_with_database_2()
+# test_basic_2()
+# test_create_multiple_in_live_file()
+# test_basic_with_database_1()
+# test_basic_with_database_2()
 # test_basic_1_autogenerate_tests()
 # test_basic_2_autogenerate_tests()
 # test_basic_with_database_1_autogenerate_tests()

@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DEFAULT_DB_PATH = "lambda_ai/generated_dbs"
+DEFAULT_DB_PATH = "generated_dbs"
 MAX_ROWS_TO_DISPLAY = 3
 
 SQL_type_conversion = {

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON
-from lambda_ai.database.base import Base
+from database.base import Base
 
 
 class APIFileModel(Base):

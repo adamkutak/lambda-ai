@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from lambda_ai.database.models.api_function import APIFunctionModel
-from lambda_ai.database.schemas.api_function import APIFunctionCreate
+from database.models.api_function import APIFunctionModel
+from database.schemas.api_function import APIFunctionCreate
 
 
 def create_api_function(db: Session, api_function: APIFunctionCreate):

@@ -5,7 +5,7 @@ from typing import Dict
 from .utils import get_imports
 import psutil
 
-TEST_FOLDER = "lambda_ai/generated_tests"
+TEST_FOLDER = "generated_tests"
 
 IMPORT_CODE = [
     "from fastapi import FastAPI, Request",

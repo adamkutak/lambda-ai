@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from lambda_ai.database.models.table import TableModel
-from lambda_ai.database.schemas.table import TableCreate
+from database.models.table import TableModel
+from database.schemas.table import TableCreate
 
 
 def create_table(db: Session, table_data: TableCreate):

@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional
-from lambda_ai.lambdaai.environment import DEFAULT_HOST, DEFAULT_PORT
+
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = "8005"
 
 
 class APIEnvironmentBase(BaseModel):

@@ -1,25 +1,23 @@
-from lambda_ai.database.crud.api_container import (
+from database.crud.api_container import (
     create_api_environment,
     create_api_file,
     get_api_file,
     update_api_file,
 )
-from lambda_ai.database.crud.api_function import (
+from database.crud.api_function import (
     create_api_function,
     get_api_function,
     update_api_function,
 )
-from lambda_ai.database.crud.db import create_db, delete_db, get_all_dbs, get_db
-from lambda_ai.database.crud.table import create_table, get_all_tables_by_db
-from lambda_ai.database.crud.user import create_user, get_user_from_email
-
-from lambda_ai.database.main import db_test_session
-
-from lambda_ai.database.schemas.api_function import APIFunctionCreate
-from lambda_ai.database.schemas.db import DBCreate
-from lambda_ai.database.schemas.api_container import APIFileCreate, APIEnvironmentCreate
-from lambda_ai.database.schemas.table import TableCreate
-from lambda_ai.database.schemas.user import CreateUser
+from database.crud.db import create_db, delete_db, get_all_dbs, get_db
+from database.crud.table import create_table, get_all_tables_by_db
+from database.crud.user import create_user, get_user_from_email
+from database.main import db_test_session
+from database.schemas.api_function import APIFunctionCreate
+from database.schemas.db import DBCreate
+from database.schemas.api_container import APIFileCreate, APIEnvironmentCreate
+from database.schemas.table import TableCreate
+from database.schemas.user import CreateUser
 
 
 # FIXME: some of the transactions are not being rolled back with db_test_session, and the data in the db is persisting between tests

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from lambda_ai.database.models.api_container import APIEnvironmentModel, APIFileModel
-from lambda_ai.database.schemas.api_container import (
+from database.models.api_container import APIEnvironmentModel, APIFileModel
+from database.schemas.api_container import (
     APIEnvironment,
     APIEnvironmentCreate,
     APIFile,
