@@ -174,9 +174,11 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
 
     with db_session() as session:
         token_usage = {
-            "prompt_token_usage": new_api_function.usage["prompt_tokens"]
+            "prompt_token_usage": sql_gen_agent.usage["prompt_tokens"]
+            + new_api_function.usage["prompt_tokens"]
             + authed_user.prompt_token_usage,
-            "completion_token_usage": new_api_function.usage["completion_tokens"]
+            "completion_token_usage": sql_gen_agent.usage["completion_tokens"]
+            + new_api_function.usage["completion_tokens"]
             + authed_user.completion_token_usage,
         }
         update_user(session, authed_user_id, **token_usage)

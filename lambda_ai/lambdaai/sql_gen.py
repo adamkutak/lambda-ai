@@ -20,7 +20,8 @@ MAX_ATTEMPTS = 10
 class SQLGenAgent:
     def __init__(self, database: DB, model: str = "gpt-3.5-turbo-0613"):
         self.model = model
-        self.database = database  # NOTE: This creates a 1:1 rel for db and agent. Could take db as a method param to resolve this.
+        self.database = database
+        self.usage = {"prompt_tokens": 0, "completion_tokens": 0}
 
     def generate_sql(self, pre_sql: str, post_sql: str):
         ai_chat = openAIchat(
@@ -58,6 +59,9 @@ class SQLGenAgent:
 
             if result_code < 1:
                 return data
+
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
 
         return None
 
