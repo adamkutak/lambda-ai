@@ -35,6 +35,15 @@ def get_user_from_email(db: Session, email: str):
     return user
 
 
+def login_user_with_email_password(db: Session, email: str, password: str):
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+
+    if user and user.password == password:
+        return user
+    else:
+        return None
+
+
 def get_user(db: Session, user_id: int) -> User:
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
 

@@ -1,5 +1,5 @@
 # Use an official Node runtime as the parent image
-FROM node:14
+FROM node:18.18
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -17,5 +17,5 @@ COPY . .
 RUN npm run build
 
 # Use a simple server to serve the built app
-FROM nginx:1.17.1-alpine
+FROM nginx:1.24.0-alpine
 COPY --from=0 /app/dist /usr/share/nginx/html

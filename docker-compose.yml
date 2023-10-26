@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  web:
+  lambda_ui_v2:
     build:
       context: ./lambda_ui_v2
     ports:
-      - "8080:8080"
+      - "8080:80"
 
-  backend:
+  lambda_ai:
     build:
       context: ./lambda_ai
     ports:
       - "8000:8000"
     depends_on:
       - db
-    environment:
-      DATABASE_URL: "postgresql://postgres:password@db:5432/mydatabase"
+    env_file:
+      - ./lambda_ai/.env
 
   db:
     image: postgres:13
