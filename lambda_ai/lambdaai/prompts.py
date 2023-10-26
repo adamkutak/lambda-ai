@@ -203,6 +203,5 @@ This is the natural language to translate to sql:
 {pre_sql}
 {post_sql}
 
-
 Here is the description of the database:
 {db_details}"""

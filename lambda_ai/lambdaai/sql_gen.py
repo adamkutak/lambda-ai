@@ -14,7 +14,7 @@ from .prompts import (
 from .gpt_function_calls import FUNCTION_CALLING_SQL_GENERATION, SQLGeneration
 from .db import DB
 
-MAX_ATTEMPTS = 10
+MAX_ATTEMPTS = 4
 
 
 class SQLGenAgent:
@@ -32,13 +32,13 @@ class SQLGenAgent:
 
         ai_chat.add_function_one_shot_prompt(
             name="create_sql",
-            input_data="",
+            input_data=None,
             output_data=ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
         )
 
         ai_chat.add_function_one_shot_prompt(
             name="create_sql",
-            input_data="",
+            input_data=None,
             output_data=ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
         )
 
@@ -49,7 +49,6 @@ class SQLGenAgent:
         )
 
         attempts = 0
-
         while attempts < MAX_ATTEMPTS:
             ai_response = ai_chat.send_chat(message=prompt, function_call="create_sql")
 
@@ -58,10 +57,9 @@ class SQLGenAgent:
             )
 
             if result_code < 1:
+                self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+                self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
                 return data
-
-        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
-        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
 
         return None
 
