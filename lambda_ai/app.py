@@ -116,16 +116,18 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
                     status_code=400,
                 )
 
-        breakpoint()
-        sql_gen_agent = SQLGenAgent(attached_db)
+        sql_gen_agent = SQLGenAgent(
+            attached_db,
+            # model="gpt-4"
+        )
 
         for tc in testcases:
             if tc["sqltest"]:
-                breakpoint()
                 pre_and_post_sql = sql_gen_agent.generate_sql(
                     pre_sql=tc["sqltest"]["pre_sql"],
                     post_sql=tc["sqltest"]["post_sql"],
                 )
+                print(f"SQL Generated: {pre_and_post_sql}")
 
                 # add new sql to existing test case in testcases list
                 if pre_and_post_sql:
@@ -136,7 +138,6 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
     else:
         attached_db = None
 
-    breakpoint()
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
         name=request.tool.name,

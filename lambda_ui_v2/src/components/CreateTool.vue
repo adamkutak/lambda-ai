@@ -135,9 +135,9 @@ export default {
                     input: tc.inputs,
                     output: tc.outputs,
                     ...(shouldAddDbTest ? {
-                        dbTest: {
-                            dbTestRow: tc.dbTestRow,
-                            dbPostTestCheck: tc.dbPostTestCheck
+                        sqltest: {
+                            pre_sql: tc.dbTestRow,
+                            post_sql: tc.dbPostTestCheck
                         }
                     } : {})
                 };
@@ -148,10 +148,10 @@ export default {
                 tool: {
                     ...this.tool,
                     inputs: inputsDict,
-                    outputs: outputsDict
+                    outputs: outputsDict,
+                    selectedDatabase: this.tool.selectedDatabase ? this.tool.selectedDatabase.id : null
                 },
                 testcases: formattedTestCases,
-                database_id: this.tool.selectedDatabase ? this.tool.selectedDatabase.id : null
             };
 
             console.log(new_tool_data);
