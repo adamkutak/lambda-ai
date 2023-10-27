@@ -115,26 +115,6 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
                     {"error": "Attempted to attach a database that was not found"},
                     status_code=400,
                 )
-
-        sql_gen_agent = SQLGenAgent(
-            attached_db,
-            # model="gpt-4"
-        )
-
-        for tc in testcases:
-            if tc["sqltest"]:
-                pre_and_post_sql = sql_gen_agent.generate_sql(
-                    pre_sql=tc["sqltest"]["pre_sql"],
-                    post_sql=tc["sqltest"]["post_sql"],
-                )
-                print(f"SQL Generated: {pre_and_post_sql}")
-
-                # add new sql to existing test case in testcases list
-                if pre_and_post_sql:
-                    tc["sqltest"] = pre_and_post_sql  # NOTE:
-
-                # TODO: Add some error handling when SQL generation fails
-
     else:
         attached_db = None
 
@@ -165,6 +145,7 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
         outputs=dict(request.tool.outputs),
         functionality=request.tool.description,
         test_cases=testcases,
+        test_cases_aresql=False,
         force_use_db=False,
         is_async=False,
         attached_db=attached_db,
@@ -174,11 +155,9 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
 
     with db_session() as session:
         token_usage = {
-            "prompt_token_usage": sql_gen_agent.usage["prompt_tokens"]
-            + new_api_function.usage["prompt_tokens"]
+            "prompt_token_usage": new_api_function.usage["prompt_tokens"]
             + authed_user.prompt_token_usage,
-            "completion_token_usage": sql_gen_agent.usage["completion_tokens"]
-            + new_api_function.usage["completion_tokens"]
+            "completion_token_usage": new_api_function.usage["completion_tokens"]
             + authed_user.completion_token_usage,
         }
         update_user(session, authed_user_id, **token_usage)
@@ -334,7 +313,6 @@ def create_table(request: CreateTableRequest, session_id: str = Cookie(None)):
     session_id = parse_bearer_token(session_id)
 
     with db_session() as db:
-        breakpoint()
         authed_user = get_user_from_session(db, session_id)
 
     if not authed_user:
@@ -581,7 +559,6 @@ def login(request: LoginRequest, session_id: str = Cookie(None)):
         with db_session() as db:
             user = get_user_from_session(db, session_id)
 
-    # breakpoint()
     if not user:
         with db_session() as db:
             user = get_user_from_email(db=db, email=request.email)

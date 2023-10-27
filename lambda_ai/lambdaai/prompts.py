@@ -205,3 +205,12 @@ This is the natural language to translate to sql:
 
 Here is the description of the database:
 {db_details}"""
+
+SQL_ON_CREATE_ERROR = """
+There was an error attempting to run the SQL you generated on the provided database.
+Review the original instructions, and modify your SQL based on the error:
+{error}
+
+Do not include any apology message or other useless text.
+Pay attention to which part of the SQL (pre or post) failed.
+"""

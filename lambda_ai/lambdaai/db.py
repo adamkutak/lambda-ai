@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import uuid
 
 DEFAULT_DB_PATH = "generated_dbs"
 MAX_ROWS_TO_DISPLAY = 3
@@ -28,6 +29,7 @@ class DB:
         self.table_names = []
 
         # TODO: temporarily removing existing file for ease of use...
+        # FIXME: review this mess:
         if replace_existing:
             curr_dbs_at_path = os.listdir(
                 location
@@ -140,3 +142,22 @@ class DB:
         test_db.close()
 
         return test_db
+
+    def create_isolated_copy(self):
+        isolated_test_db = self.test_db_path[:-3] + uuid.uuid4().hex + ".db"
+
+        # just incase, check if it exists already and remove it:
+        try:
+            os.remove(isolated_test_db)
+        except:
+            pass
+        test_db = sqlite3.connect(isolated_test_db)
+        file_db = sqlite3.connect(self.path)
+
+        query = "".join(line for line in file_db.iterdump())
+        test_db.executescript(query)
+        test_db.commit()
+
+        test_db.close()
+
+        return isolated_test_db

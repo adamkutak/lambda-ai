@@ -4,15 +4,17 @@
 #     test_case: in: 10, 5; out: 50
 #     pre-test: setup the database so there is 45 products in inventory column before the call and 40 products after.
 
+import os
 from .gpt_management import openAIchat
 from .prompts import (
-    # ONE_SHOT_SQL_GENERATION_USER,
     ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
     ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
     SQL_GENERATION_PROMPT,
+    SQL_ON_CREATE_ERROR,
 )
 from .gpt_function_calls import FUNCTION_CALLING_SQL_GENERATION, SQLGeneration
 from .db import DB
+from .utils import execute_sql
 
 MAX_ATTEMPTS = 4
 
@@ -49,22 +51,57 @@ class SQLGenAgent:
         )
 
         attempts = 0
-        while attempts < MAX_ATTEMPTS:
-            ai_response = ai_chat.send_chat(message=prompt, function_call="create_sql")
+        result_code = 1
+        ai_response = ai_chat.send_chat(message=prompt, function_call="create_sql")
 
-            result_code, data = openAIchat.validate_json_function_call(
-                ai_response, "create_sql", SQLGeneration
-            )
+        while result_code > 0 and attempts < MAX_ATTEMPTS:
+            result_code, data = self.process_and_test_response(ai_response)
+            if result_code > 0:
+                message = SQL_ON_CREATE_ERROR.format(error=data)
+                ai_response = ai_chat.send_chat(
+                    message=message, function_call="create_sql"
+                )
+            attempts += 1
 
-            if result_code < 1:
-                self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
-                self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
-                return data
+        self.usage["prompt_tokens"] += ai_chat.usage["prompt_tokens"]
+        self.usage["completion_tokens"] += ai_chat.usage["completion_tokens"]
+        return result_code, data
 
-        return None
+    def process_and_test_response(self, ai_response):
+        validate_json, data = openAIchat.validate_json_function_call(
+            ai_response, "create_sql", SQLGeneration
+        )
+        if validate_json > 0:
+            return 2, data
 
-    def process_and_validate_response(ai_response):
-        # 1. use openAIchat.validate_json_function_call to validate func call errors
-        # 2. check to see if sql is formatted properly
-        # 3. make sure sql calls won't error when called on attached db (or maybe this is done in test_harness)
-        pass
+        pre_sql_test = data["pre_sql"]
+        post_sql_test = data["post_sql"]
+
+        isolated_test_db = self.database.create_isolated_copy()
+
+        for pre_sql in pre_sql_test:
+            try:
+                execute_sql(isolated_test_db, pre_sql)
+            except Exception as e:
+                os.remove(isolated_test_db)
+                return 1, f"error with pre sql query: {pre_sql}, The error is: {e}"
+
+        for post_sql in post_sql_test:
+            try:
+                ret_value = execute_sql(isolated_test_db, post_sql["sql"])
+            except Exception as e:
+                os.remove(isolated_test_db)
+                return (
+                    1,
+                    f"error with pre sql query: {post_sql['sql']}, The error is: {e}",
+                )
+
+            if not ret_value:
+                os.remove(isolated_test_db)
+                return (
+                    1,
+                    f"error: post sql statement: {post_sql['sql']} did not return any comparison value to assert against.",
+                )
+
+        os.remove(isolated_test_db)
+        return 0, data

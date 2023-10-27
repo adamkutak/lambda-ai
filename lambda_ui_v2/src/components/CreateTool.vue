@@ -84,7 +84,7 @@ export default {
         };
     },
     watch: {
-        'tool.selectedDatabase': function(newVal, oldVal) {
+        'tool.selectedDatabase': function (newVal, oldVal) {
             if (newVal !== oldVal) { // check if the value really changed to prevent unnecessary emits
                 this.$emit('update:selectedDatabase', newVal);
             }
@@ -135,10 +135,8 @@ export default {
                     input: tc.inputs,
                     output: tc.outputs,
                     ...(shouldAddDbTest ? {
-                        sqltest: {
-                            pre_sql: tc.dbTestRow,
-                            post_sql: tc.dbPostTestCheck
-                        }
+                        pre_sql: tc.dbTestRow,
+                        post_sql: tc.dbPostTestCheck
                     } : {})
                 };
             });

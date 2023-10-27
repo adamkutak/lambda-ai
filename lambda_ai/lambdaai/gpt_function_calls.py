@@ -24,17 +24,6 @@ class EndpointCreation(BaseModel):
     )
 
 
-class PostSql(BaseModel):
-    sql: str = Field(
-        ...,
-        description="the sql to run to check the database after the test",
-    )
-    assert_value: Any = Field(
-        ...,
-        description="the value you expect your sql to return if the test is successful.",
-    )
-
-
 class FunctionCallTest(BaseModel):
     inputs: dict = Field(
         ...,
@@ -43,6 +32,17 @@ class FunctionCallTest(BaseModel):
     outputs: dict = Field(
         ...,
         description="The test outputs. Make sure they match the output types of the function description.",
+    )
+
+
+class PostSql(BaseModel):
+    sql: str = Field(
+        ...,
+        description="the sql to run to check the database after the test",
+    )
+    assert_value: Any = Field(
+        ...,
+        description="the value you expect your sql to return if the test is successful.",
     )
 
 

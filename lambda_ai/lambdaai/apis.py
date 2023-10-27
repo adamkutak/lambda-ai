@@ -1,3 +1,4 @@
+from .sql_gen import SQLGenAgent
 from .environment import APIFile
 from .prompts import (
     CHAIN_OF_THOUGHT_REASONING,
@@ -31,6 +32,7 @@ class APIFunction:
         outputs: dict,
         functionality: str,
         test_cases: list[dict] = [],
+        test_cases_aresql: bool = True,
         is_async: bool = None,
         attached_db: DB = None,
         force_use_db: bool = False,
@@ -44,6 +46,7 @@ class APIFunction:
         self.outputs = outputs
         self.functionality = functionality
         self.test_cases = test_cases
+        self.test_cases_aresql = test_cases_aresql
         self.is_async = is_async
         self.build_attempts = []
         self.api_function_created = {}
@@ -58,14 +61,25 @@ class APIFunction:
             self.model = None
 
     def create_api_function(self) -> str:
-        from .test_harness import TestHarness
+        # turn natural language into SQL
+        if not self.test_cases_aresql and self.attached_db:
+            sql_gen_agent = SQLGenAgent(self.attached_db)
+            for i in range(len(self.test_cases)):
+                if self.test_cases[i]["pre_sql"] and self.test_cases[i]["post_sql"]:
+                    result_code, data = sql_gen_agent.generate_sql(
+                        pre_sql=self.test_cases[i]["pre_sql"],
+                        post_sql=self.test_cases[i]["post_sql"],
+                    )
+                    print(f"SQL Generation result: {result_code}")
+                    if result_code == 0:  # success
+                        self.test_cases[i]["pre_sql"] = data["pre_sql"]
+                        self.test_cases[i]["post_sql"] = data["post_sql"]
+                    else:
+                        # FIXME: if it fails, we just do nothing for now
+                        pass
 
-        if not self.test_cases:
-            result_code, message = self.test_harness = TestHarness.build_auto_tester(
-                api_function=self
-            )
-            if result_code > 0:
-                print(f"Failed to autogenerate test cases: {message}")
+            self.usage["prompt_tokens"] += sql_gen_agent.usage["prompt_tokens"]
+            self.usage["completion_tokens"] += sql_gen_agent.usage["completion_tokens"]
 
         result_code = 1
         while result_code > 0 and len(self.build_attempts) < MAX_BUILD_ATTEMPTS:
@@ -190,9 +204,7 @@ class APIFunction:
             test_function = self.attached_db.insert_db_path_into_function_exec_calls(
                 test_function, for_test=True
             )
-
         print(function)
-
         self.api_function_created = {
             "name": self.name,
             "path": self.path,
