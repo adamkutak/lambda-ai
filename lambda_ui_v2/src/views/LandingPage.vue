@@ -47,6 +47,7 @@
   
 <script>
 import axios from 'axios';
+import GlobalState from '@/globalState.js';
 export default {
   name: 'LandingPage',
   methods: {
@@ -59,6 +60,7 @@ export default {
       try {
         const response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/authenticate', config);
         if (response.status == 200) {
+          await GlobalState.init()
           this.$router.push('/tools');
         } else {
           this.$router.push('/login');

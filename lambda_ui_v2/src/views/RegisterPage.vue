@@ -59,7 +59,7 @@ export default {
         const response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/register', register_data, config);
         console.log(response)
         if (response.status == 200) {
-          GlobalState.init()
+          await GlobalState.init()
           this.$router.push('/tools');
         } else {
           // Handle failed register, e.g., showing an error message

@@ -509,9 +509,14 @@ def query_tool(request: QueryToolRequest, session_id: str = Cookie(None)):
     e, response = api_env.query(tool.path, request.inputs)
 
     if not e:
-        return {"output": response.json()}
-    else:
-        return {"error": e}
+        if response.status_code >= 400:
+            return JSONResponse(
+                content={"error": response.text},
+                status_code=400,
+            )
+        else:
+            return JSONResponse(content={"output": response.json()})
+    return {"error": e}
 
 
 @app.post("/register")

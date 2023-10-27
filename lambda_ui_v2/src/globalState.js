@@ -4,7 +4,7 @@ import axios from 'axios';
 const state = reactive({
     tools: [],
     databases: [],
-    isLoaded: false   // Added isLoaded state
+    isLoaded: false
 });
 
 export default {
@@ -14,7 +14,6 @@ export default {
         const config = {
             headers: {
                 'Content-Type': 'application/json',
-                // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
             }
         };
 
@@ -30,7 +29,6 @@ export default {
         const config = {
             headers: {
                 'Content-Type': 'application/json',
-                // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
             }
         };
 
@@ -53,6 +51,6 @@ export default {
 
     async init() {
         await Promise.all([this.fetchTools(), this.fetchDatabases()]);
-        state.isLoaded = true;   // Set isLoaded to true after fetching
+        state.isLoaded = true;
     }
 };

@@ -60,18 +60,27 @@ First iteration MVP:
 - name slugging for user inputs (DONE)
 - add user authentication/management (DONE)
 - add landing page with login screen (DONE)
-- figure out deployment (possible issues with core tech)
+- figure out deployment (IN PROGRESS)
 - user can't test SQL in UI (IN PROGRESS)
 - ability to delete/undeploy things (DONE)
 --------------------------------
 Second Iteration MVP:
+- functions that take in/(out??) files
 - refactor backend classes
 - improve generation features
 - additional UI views
 - ability to add external packages/APIs
 - queue cards in UI to see the status of a generating API tool.
   - otherwise, if the user leaves the page they can't see if an error occured
-
+--------------------------------
+Bugs:
+- when logging in, the tools page is empty at first. After changing pages it gets populated (done)
+- Reloading any page (except the landing page) gives a nginx 404 not found error (done)
+- if you don't run a tool correctly, parse error message and show it? (done)
+- from the UI, the test inputs/outputs are being passed as strings.
+   - same with the query tool function.
+-  when I refresh the page, the tools and tables dissapear (done)
+- fix too frequent reloading of page (done)
 
 AUTH BRANCH
 - Create a user model and user pydantic schema ✅ NOQA
