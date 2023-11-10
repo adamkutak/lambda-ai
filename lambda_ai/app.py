@@ -108,7 +108,10 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
         with db_session() as session:
             db_obj = get_db(session, request.tool.selectedDatabase, authed_user.id)
             if db_obj:
+                # find the tables attached to the database
+                tables = get_all_tables_by_db(session, db_obj.id)
                 attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
+                attached_db.table_names = [table.name for table in tables]
             else:
                 print("Attempted to attach a database that was not found")
                 return JSONResponse(
