@@ -487,6 +487,96 @@ def test_basic_with_database_2():
     os.remove(my_test_db.path)
 
 
+def test_basic_with_database_1_with_natural_lang_sql():
+    my_test_db = DB("my_test_db", "generated_dbs", replace_existing=True)
+    table_1_columns = {
+        "item_id": {
+            "type": "int",
+            "constraints": ["PRIMARY KEY"],
+        },
+        "name": {
+            "type": "str",
+            "constraints": ["NOT NULL"],
+        },
+        "quantity": {
+            "type": "int",
+            "constraints": ["NOT NULL"],
+        },
+        "price": {
+            "type": "float",
+            "constraints": ["NOT NULL"],
+        },
+    }
+    my_test_db.add_table("Items", table_1_columns)
+
+    insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)\nVALUES (300, 'Apple', 600, 3.59)"""
+    execute_sql(my_test_db.path, insert_test_values)
+
+    insert_test_values = f"""INSERT INTO Items (item_id, name, quantity, price)\nVALUES (400, 'Pineapple', 15, 3.41)"""
+    execute_sql(my_test_db.path, insert_test_values)
+
+    api_function_1 = APIFunction(
+        "sell_quantity",
+        "tests/sell_quantity/",
+        {
+            "item_id": "int",
+            "status": "bool",
+            "bought": "int",
+        },
+        {
+            "cost": "float",
+        },
+        "if status is true, sell the bought quantity of item_id from the database. Return the logarithm (base 10) of the cost of the purchase. Use the math library to do that.",
+        test_cases=[
+            {
+                "input": {
+                    "item_id": 100,
+                    "status": True,
+                    "bought": 6,
+                },
+                "output": {
+                    "cost": 0.79934,
+                },
+                "pre_sql": [
+                    "Add a new item Bananas (id 100) with 57 quantity and price 1.05",
+                ],
+                "post_sql": [
+                    {
+                        "sql": "get the quantity of bananas (id 100)",
+                        "assert_value": 51,
+                    }
+                ],
+            },
+            {
+                "input": {
+                    "item_id": 200,
+                    "status": False,
+                    "bought": 120,
+                },
+                "output": {
+                    "cost": 0,
+                },
+                "pre_sql": [
+                    "add this row to items: (200, 'Macaroni', 450, 3.40)",
+                ],
+                "post_sql": [
+                    {
+                        "sql": "get the quantity remaining of item id 200",
+                        "assert_value": 450,
+                    }
+                ],
+            },
+        ],
+        test_cases_aresql=False,
+        attached_db=my_test_db,
+        # use_line_by_line=False,
+        # use_error_analysis=False,
+    )
+    api_function_1.create_api_function()
+    print(api_function_1.usage)
+    os.remove(my_test_db.path)
+
+
 def test_basic_1_autogenerate_tests():
     repetition = 1
     build_result_list = []
@@ -597,11 +687,12 @@ def test_basic_with_database_1_autogenerate_tests():
     os.remove(my_test_db.path)
 
 
-test_basic_1()
-test_basic_2()
+# test_basic_1()
+# test_basic_2()
 # test_create_multiple_in_live_file()
-test_basic_with_database_1()
-test_basic_with_database_2()
+# test_basic_with_database_1()
+# test_basic_with_database_2()
+test_basic_with_database_1_with_natural_lang_sql()
 # test_basic_1_autogenerate_tests()
 # test_basic_2_autogenerate_tests()
 # test_basic_with_database_1_autogenerate_tests()

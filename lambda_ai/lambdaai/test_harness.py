@@ -41,9 +41,10 @@ class TestHarness:
         for test_case in self.api_function.test_cases:
             if test_db:
                 test_db.create_testing_copy()
-                pre_sql_queries = test_case.get("pre_sql", [])
-                for query in pre_sql_queries:
-                    execute_sql(test_db.test_db_path, query)
+                pre_sql = test_case.get("pre_sql")
+                if pre_sql:
+                    for query in pre_sql:
+                        execute_sql(test_db.test_db_path, query)
             error_message = None
             e, response = self.test_server.query(
                 self.api_function.path, test_case["input"]
@@ -60,19 +61,22 @@ class TestHarness:
                 error_message = f"error on test case: {str(test_case['input'])}, expected output is: {str(test_case['output'])}. Actual output is {str(response.json())}"
 
             if test_db and not error_message:
-                post_sql_tests = test_case.get("post_sql", [])
-                for test in post_sql_tests:
-                    if not error_message:
-                        result_val = execute_sql(test_db.test_db_path, test["sql"])
-                        if result_val[0][0] != test["assert_value"]:
-                            pre_sql_queries_str = "\n".join(pre_sql_queries)
-                            error_message = (
-                                f"Error: while testing with input {str(test_case['input'])},"
-                                f"with test assert SQL on the database: {test['sql']},\n"
-                                f"expected return value {test['assert_value']}, got {result_val[0][0]} instead."
-                                "Additional Info: the following pre-test setup was ran on the database:\n"
-                                f"{pre_sql_queries_str}\n\n"
-                            )
+                post_sql = test_case.get("post_sql")
+                if post_sql:
+                    for test in post_sql:
+                        if not error_message:
+                            result_val = execute_sql(test_db.test_db_path, test["sql"])
+                            if str(result_val[0]) != test["assert_value"]:
+                                pre_sql_queries_str = "\n".join(
+                                    test_case.get("pre_sql", [])
+                                )
+                                error_message = (
+                                    f"Error: while testing with input {str(test_case['input'])},"
+                                    f"with test assert SQL on the database: {test['sql']},\n"
+                                    f"expected return value {test['assert_value']}, got {result_val[0]} instead."
+                                    "Additional Info: the following pre-test setup was ran on the database:\n"
+                                    f"{pre_sql_queries_str}\n\n"
+                                )
                 os.remove(test_db.test_db_path)
 
             if error_message:

@@ -24,17 +24,6 @@ class EndpointCreation(BaseModel):
     )
 
 
-class PostSql(BaseModel):
-    sql: str = Field(
-        ...,
-        description="the sql to run to check the database after the test",
-    )
-    assert_value: Any = Field(
-        ...,
-        description="the value you expect your sql to return if the test is successful.",
-    )
-
-
 class FunctionCallTest(BaseModel):
     inputs: dict = Field(
         ...,
@@ -46,6 +35,17 @@ class FunctionCallTest(BaseModel):
     )
 
 
+class PostSql(BaseModel):
+    sql: str = Field(
+        ...,
+        description="the sql to run to check the database after the test",
+    )
+    assert_value: Any = Field(
+        ...,
+        description="the value you expect your sql to return if the test is successful.",
+    )
+
+
 class FunctionCallTestWithDB(FunctionCallTest):
     pre_sql: List[str] = Field(
         ...,
@@ -54,6 +54,17 @@ class FunctionCallTestWithDB(FunctionCallTest):
     post_sql: List[PostSql] = Field(
         ...,
         description="list of the SQL checks you would want to run to verify the endpoint worked correctly.",
+    )
+
+
+class SQLGeneration(BaseModel):
+    pre_sql: List[str] = Field(
+        ...,
+        description="A list of valid SQL statements. Each is a valid SQL you wish to run before the function is tested.",
+    )
+    post_sql: List[PostSql] = Field(
+        ...,
+        description="list of the SQL checks you would want to run to verify the endpoint updated the attached database correctly.",
     )
 
 
@@ -73,4 +84,10 @@ FUNCTION_CALLING_TEST_CREATION_DB_EXT = {
     "name": "add_test",
     "description": "Create a new test case to be run on a FastAPI endpoint",
     "parameters": FunctionCallTestWithDB.model_json_schema(),
+}
+
+FUNCTION_CALLING_SQL_GENERATION = {
+    "name": "create_sql",
+    "description": "Create SQL statements to setup a database for testing and to verify that a database was updated correctly after testing.",
+    "parameters": SQLGeneration.model_json_schema(),
 }

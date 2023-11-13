@@ -20,6 +20,27 @@
                     <input :id="'output-' + output.key + '-' + index" v-model="testCase.outputs[output.key]" />
                 </div>
             </div>
+            <!-- Database Check Section -->
+            <!-- Only render the inner contents if selectedDatabase is not null -->
+            <div v-if="selectedDatabase">
+                <!-- If testCase.showDbCheck is true, show the db-check-section -->
+                <div class="db-check-section" v-if="testCase.showDbCheck">
+                    <h3>Database Check</h3>
+                    <div class="field">
+                        <label :for="'test-row-' + index" class="field-label">Add Test Row</label>
+                        <input :id="'test-row-' + index" v-model="testCase.dbTestRow" />
+                    </div>
+                    <div class="field">
+                        <label :for="'post-test-check-' + index" class="field-label">Post-test Check</label>
+                        <input :id="'post-test-check-' + index" v-model="testCase.dbPostTestCheck" />
+                    </div>
+                    <button @click="removeDbCheck(index)" class="remove-db-check-btn">Remove</button>
+                </div>
+
+                <!-- If testCase.showDbCheck is false, show the add-db-check-btn -->
+                <button v-else @click="showDbCheck(index)" class="add-db-check-btn">+ add database check</button>
+
+            </div>
 
             <button @click="removeTestCase(index)" class="remove-btn">-</button>
         </div>
@@ -27,10 +48,10 @@
         <button @click="addTestCase" class="add-btn">+</button>
     </div>
 </template>
-  
+
 <script>
 export default {
-    props: ['inputs', 'outputs'],
+    props: ['inputs', 'outputs', 'selectedDatabase'],
     data() {
         return {
             testCases: []
@@ -54,10 +75,24 @@ export default {
                 outputs[output.key] = "";
             }
             
-            this.testCases.push({ inputs, outputs });
+            this.testCases.push({
+                inputs,
+                outputs,
+                showDbCheck: false,  // added this
+                dbTestRow: "",       // added this
+                dbPostTestCheck: ""  // added this
+            });
         },
         removeTestCase(index) {
             this.testCases.splice(index, 1);
+        },
+        showDbCheck(index) {           // added this method
+            this.testCases[index].showDbCheck = true;
+        },
+        removeDbCheck(index) {         // added this method
+            this.testCases[index].showDbCheck = false;
+            this.testCases[index].dbTestRow = "";
+            this.testCases[index].dbPostTestCheck = "";
         }
     }
 }
@@ -86,7 +121,6 @@ h2 {
     width: 60%;
     /* Increased the width */
     margin: 0 auto;
-    /* Center the box */
     min-width: 150px;
 }
 
@@ -126,6 +160,26 @@ h2 {
 
 .remove-btn:hover,
 .add-btn:hover {
+    color: #555;
+}
+.db-check-section {
+    padding: 1px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.remove-db-check-btn,
+.add-db-check-btn {
+    margin-top: 10px;
+    background-color: transparent;
+    color: #333;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.remove-db-check-btn:hover,
+.add-db-check-btn:hover {
     color: #555;
 }
 </style>

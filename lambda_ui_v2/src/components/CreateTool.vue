@@ -41,8 +41,8 @@
             <textarea id="toolDescription" v-model="tool.description" required></textarea>
             <label for="databaseSelect">Attach Database:</label>
             <select id="databaseSelect" v-model="tool.selectedDatabase">
-                <option value="null" disabled selected>None</option>
-                <option v-for="db in databases" :key="db" :value="db">{{ db }}</option>
+                <option :value="null">None</option>
+                <option v-for="db in databases" :key="db.id" :value="db">{{ db.name }}</option>
             </select>
             <button v-if="!loading && !generate_error" type="submit">Create Tool</button>
             <div v-else-if="loading">
@@ -80,8 +80,15 @@ export default {
                 selectedDatabase: null,
             },
             types: ['str', 'int', 'float', 'bool'],
-            databases: []
+            databases: GlobalState.state.databases
         };
+    },
+    watch: {
+        'tool.selectedDatabase': function (newVal, oldVal) {
+            if (newVal !== oldVal) { // check if the value really changed to prevent unnecessary emits
+                this.$emit('update:selectedDatabase', newVal);
+            }
+        }
     },
     methods: {
         addInput() {
@@ -120,22 +127,29 @@ export default {
             }, {});
 
             // Adjust the testCases to match the Pydantic model
-            console.log(this.testCases)
-            const formattedTestCases = this.testCases.map(tc => ({
-                input: tc.inputs,
-                output: tc.outputs
-            }));
-            console.log(formattedTestCases)
+            // we also add the database tests if at least one is filled out
+            const formattedTestCases = this.testCases.map(tc => {
+                const shouldAddDbTest = (tc.dbTestRow && tc.dbTestRow.trim() !== '') || (tc.dbPostTestCheck && tc.dbPostTestCheck.trim() !== '');
+
+                return {
+                    input: tc.inputs,
+                    output: tc.outputs,
+                    ...(shouldAddDbTest ? {
+                        pre_sql: tc.dbTestRow,
+                        post_sql: tc.dbPostTestCheck
+                    } : {})
+                };
+            });
 
 
-            // Prepare the final data payload
             const new_tool_data = {
                 tool: {
                     ...this.tool,
                     inputs: inputsDict,
-                    outputs: outputsDict
+                    outputs: outputsDict,
+                    selectedDatabase: this.tool.selectedDatabase ? this.tool.selectedDatabase.id : null
                 },
-                testcases: formattedTestCases
+                testcases: formattedTestCases,
             };
 
             console.log(new_tool_data);
