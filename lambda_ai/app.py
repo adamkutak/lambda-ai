@@ -42,6 +42,7 @@ from database.crud.user import (
     get_all_users,
     get_user_from_email,
     get_user_from_session,
+    login_user_with_email_password,
     update_user,
 )
 
@@ -520,9 +521,14 @@ def query_tool(request: QueryToolRequest, session_id: str = Cookie(None)):
     e, response = api_env.query(tool.path, converted_inputs)
 
     if not e:
-        return {"output": response.json()}
-    else:
-        return {"error": e}
+        if response.status_code >= 400:
+            return JSONResponse(
+                content={"error": response.text},
+                status_code=400,
+            )
+        else:
+            return JSONResponse(content={"output": response.json()})
+    return {"error": e}
 
 
 @app.post("/register")
@@ -559,24 +565,52 @@ def register(request: CreateUser):
     return response
 
 
-# NOTE: If logging in with bearer token, must send LoginRequest with blank email and pass fields.
 @app.post("/login")
 def login(request: LoginRequest, session_id: str = Cookie(None)):
+    with db_session() as db:
+        user = login_user_with_email_password(
+            db=db, email=request.email, password=request.password
+        )
+    if not user:
+        return JSONResponse(
+            {"error": "Incorrect username and password"}, status_code=400
+        )
+
+    user_return = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "id": user.id,
+    }
+
+    response = JSONResponse(user_return)
+
+    response.set_cookie(  # TODO: Add safety params for prod environment
+        key="session_id",
+        value=user.session_id,
+        path="/",
+        # secure=True,
+        httponly=True,
+        # samesite='strict'
+    )
+
+    return response
+
+
+@app.post("/authenticate")
+def authenticate_token(session_id: str = Cookie(None)):
     user = None
     if session_id:
         session_id = parse_bearer_token(session_id)
 
         with db_session() as db:
             user = get_user_from_session(db, session_id)
-
-    if not user:
-        with db_session() as db:
-            user = get_user_from_email(db=db, email=request.email)
-
         if not user:
-            return JSONResponse(
-                {"error": "Incorrect username and password"}, status_code=400
-            )
+            response = JSONResponse({"error": "user doesn't exist"}, status_code=400)
+            return response
+    else:
+        response = JSONResponse({"error": "no session id provided"}, status_code=400)
+        return response
 
     user_return = {
         "first_name": user.first_name,

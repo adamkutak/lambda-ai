@@ -65,7 +65,6 @@ export default {
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
-                    // 'Authorization': 'Bearer YOUR_TOKEN_HERE'  // if you have authentication token
                 }
             };
 
@@ -75,21 +74,21 @@ export default {
             }
             try {
                 let response = await axios.post(process.env.VUE_APP_BACKEND_URL + '/query_tool', query_data, config);
+                console.log(response.data.output);
 
-                if (response.data) {
+                if (response.data.output) {
                     this.outputValues = response.data.output;
-                    console.log(response.data.output)
-                } else {
-                    console.error("No data received from the API.");
-                    this.outputValues = {
-                        // ... default error values if necessary
-                    };
                 }
             } catch (error) {
-                console.error("Error running tool:", error);
-                this.outputValues = {
-                    // ... default error values if necessary
-                };
+                const err_result = JSON.parse(error.response.data.error).detail[0].msg;
+                console.log(err_result);
+                this.populateFirstOutputWithError("error: " + err_result);
+            }
+        },
+        populateFirstOutputWithError(errorMessage) {
+            const firstKey = Object.keys(this.tool.outputs)[0];
+            if (firstKey) {
+                this.outputValues[firstKey] = errorMessage;
             }
         },
         async deleteTool() {
@@ -210,6 +209,7 @@ button:hover {
 .delete-button:hover {
     background-color: darkred;
 }
+
 .header-container {
     position: relative;
 }

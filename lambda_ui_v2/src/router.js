@@ -9,7 +9,7 @@ import MyDatabases from '@/views/MyDatabases.vue';
 import LandingPage from '@/views/LandingPage.vue';
 import LoginPage from '@/views/LoginPage.vue';
 import RegisterPage from '@/views/RegisterPage.vue';
-
+import GlobalState from '@/globalState.js';
 
 const routes = [
     {
@@ -65,5 +65,43 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 });
+
+
+// This function sets a flag on sessionStorage when the page is fully loaded
+window.addEventListener('load', () => {
+    sessionStorage.setItem('wasPageLoaded', 'true');
+});
+
+router.beforeEach((to, from, next) => {
+    // If the flag exists, we know it's a full page load
+    if (sessionStorage.getItem('wasPageLoaded') === 'true') {
+        GlobalState.init().then(() => {
+            // Remove the flag so the next in-app navigation doesn't count as a page load
+            sessionStorage.removeItem('wasPageLoaded');
+            next();
+        });
+    } else {
+        next();
+    }
+});
+
+// old function to prevent constant reloading. New one above works better
+// function wasPageRefreshed() {
+//     const navigationEntries = performance.getEntriesByType('navigation');
+//     if (navigationEntries.length > 0 && navigationEntries[0].type === 'reload') {
+//         return true;
+//     }
+//     return false;
+// }
+
+// router.beforeEach((to, from, next) => {
+//     if (wasPageRefreshed()) {
+//         GlobalState.init().then(() => {
+//             next();
+//         });
+//     } else {
+//         next();  // If it's not a page refresh, just continue
+//     }
+// });
 
 export default router;
