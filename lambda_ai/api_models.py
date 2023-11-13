@@ -14,6 +14,8 @@ class Tool(BaseModel):
 class TestCase(BaseModel):
     input: Dict[str, Any]
     output: Dict[str, Any]
+    pre_sql: Optional[str] = None
+    post_sql: Optional[str] = None
 
 
 class CreateToolRequest(BaseModel):
@@ -43,14 +45,13 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-      
+
 class DeleteToolRequest(BaseModel):
     id: int
 
-      
+
 class DeleteDatabaseRequest(BaseModel):
     id: int
-
 
 
 # print(json.dumps(CreateToolRequest.model_json_schema(), indent=2))

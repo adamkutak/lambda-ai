@@ -53,11 +53,12 @@ from database.schemas.table import TableCreate
 from database.schemas.user import CreateUser
 
 from lambdaai.apis import APIFunction
+from lambdaai.sql_gen import SQLGenAgent
 from database.main import db_session
 from lambdaai.db import DB, DEFAULT_DB_PATH
 
 from lambdaai.environment import APIEnvironment, APIFile
-from lambdaai.utils import generate_slug, parse_bearer_token
+from lambdaai.utils import generate_slug, parse_bearer_token, convert_types
 
 
 # running on app startup.
@@ -104,6 +105,28 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
 
     testcases = [testcase.model_dump() for testcase in request.testcases]
 
+    if request.tool.selectedDatabase:
+        with db_session() as session:
+            db_obj = get_db(session, request.tool.selectedDatabase, authed_user.id)
+            if db_obj:
+                # find the tables attached to the database
+                tables = get_all_tables_by_db(session, db_obj.id)
+                attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
+                attached_db.table_names = [table.name for table in tables]
+            else:
+                print("Attempted to attach a database that was not found")
+                return JSONResponse(
+                    {"error": "Attempted to attach a database that was not found"},
+                    status_code=400,
+                )
+    else:
+        attached_db = None
+
+    # sanitize datatypes:
+    for testcase in request.testcases:
+        testcase.input = convert_types(testcase.input, request.tool.inputs)
+        testcase.output = convert_types(testcase.output, request.tool.outputs)
+
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
         name=request.tool.name,
@@ -123,20 +146,6 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
         api_function_obj = create_api_function(session, new_function)
         api_obj_id = api_function_obj.id
 
-    if request.tool.selectedDatabase:
-        with db_session() as session:
-            db_obj = get_db(session, request.tool.selectedDatabase)
-            if db_obj:
-                attached_db = DB(name=db_obj.slug_name, location=db_obj.location)
-            else:
-                print("Attempted to attach a database that was not found")
-                return JSONResponse(
-                    {"error": "Attempted to attach a database that was not found"},
-                    status_code=400,
-                )
-    else:
-        attached_db = None
-
     # now we try to generate the API function.
     new_api_function = APIFunction(
         name=new_function.slug_name,
@@ -145,6 +154,7 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
         outputs=dict(request.tool.outputs),
         functionality=request.tool.description,
         test_cases=testcases,
+        test_cases_aresql=False,
         force_use_db=False,
         is_async=False,
         attached_db=attached_db,
@@ -506,7 +516,9 @@ def query_tool(request: QueryToolRequest, session_id: str = Cookie(None)):
     if not tool:
         return {"error": "Unable to query requested tool."}
 
-    e, response = api_env.query(tool.path, request.inputs)
+    # clean inputs:
+    converted_inputs = convert_types(request.inputs, tool.inputs)
+    e, response = api_env.query(tool.path, converted_inputs)
 
     if not e:
         if response.status_code >= 400:

@@ -77,19 +77,15 @@ Bugs:
 - when logging in, the tools page is empty at first. After changing pages it gets populated (done)
 - Reloading any page (except the landing page) gives a nginx 404 not found error (done)
 - if you don't run a tool correctly, parse error message and show it? (done)
-- from the UI, the test inputs/outputs are being passed as strings.
-   - same with the query tool function.
+- from the UI, the test inputs/outputs are being passed as strings. (done)
+   - same with the query tool function. (done)
 -  when I refresh the page, the tools and tables dissapear (done)
 - fix too frequent reloading of page (done)
 
-AUTH BRANCH
-- Create a user model and user pydantic schema ✅ NOQA
-- CRUD functions ✅ NOQA
-- Add session ID to model & crud ✅ QA
-- /register and /login API route ✅ QA
-- Update other models to have a foreign key for user id ✅ QA
-  [✅] APIFunctionModel
-  [✅] DBModel
-  [✅] Environments
-- update FastAPI routes to extract bearer token ✅ QA
-- check for bearer token for fast-tracked login in /login route ✅ QA
+Other Features:
+- On tool page: use tool in excel/python/others (copy link/code)
+- create table from excel/csv
+- download table as excel/csv
+- modify table (add columns)
+- perform operation on table without functions
+- create new function by modifying existing function
