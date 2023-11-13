@@ -11,20 +11,11 @@ class Tool(BaseModel):
     selectedDatabase: Optional[int] = None
 
 
-class PostSQL(BaseModel):
-    sql: str
-    assert_value: str
-
-
-class TestCaseSQLCheck(BaseModel):
-    pre_sql: str
-    post_sql: str
-
-
 class TestCase(BaseModel):
     input: Dict[str, Any]
     output: Dict[str, Any]
-    sqltest: Optional[TestCaseSQLCheck] = None
+    pre_sql: Optional[str] = None
+    post_sql: Optional[str] = None
 
 
 class CreateToolRequest(BaseModel):

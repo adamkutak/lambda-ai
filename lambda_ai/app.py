@@ -57,7 +57,7 @@ from database.main import db_session
 from lambdaai.db import DB, DEFAULT_DB_PATH
 
 from lambdaai.environment import APIEnvironment, APIFile
-from lambdaai.utils import generate_slug, parse_bearer_token
+from lambdaai.utils import generate_slug, parse_bearer_token, convert_types
 
 
 # running on app startup.
@@ -118,28 +118,13 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
                     {"error": "Attempted to attach a database that was not found"},
                     status_code=400,
                 )
-
-        sql_gen_agent = SQLGenAgent(
-            attached_db,
-            # model="gpt-4"
-        )
-
-        for tc in testcases:
-            if tc["sqltest"]:
-                pre_and_post_sql = sql_gen_agent.generate_sql(
-                    pre_sql=tc["sqltest"]["pre_sql"],
-                    post_sql=tc["sqltest"]["post_sql"],
-                )
-                print(f"SQL Generated: {pre_and_post_sql}")
-
-                # add new sql to existing test case in testcases list
-                if pre_and_post_sql:
-                    tc["sqltest"] = pre_and_post_sql  # NOTE:
-
-                # TODO: Add some error handling when SQL generation fails
-
     else:
         attached_db = None
+
+    # sanitize datatypes:
+    for testcase in request.testcases:
+        testcase.input = convert_types(testcase.input, request.tool.inputs)
+        testcase.output = convert_types(testcase.output, request.tool.outputs)
 
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
@@ -168,6 +153,7 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
         outputs=dict(request.tool.outputs),
         functionality=request.tool.description,
         test_cases=testcases,
+        test_cases_aresql=False,
         force_use_db=False,
         is_async=False,
         attached_db=attached_db,
@@ -177,11 +163,9 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
 
     with db_session() as session:
         token_usage = {
-            "prompt_token_usage": sql_gen_agent.usage["prompt_tokens"]
-            + new_api_function.usage["prompt_tokens"]
+            "prompt_token_usage": new_api_function.usage["prompt_tokens"]
             + authed_user.prompt_token_usage,
-            "completion_token_usage": sql_gen_agent.usage["completion_tokens"]
-            + new_api_function.usage["completion_tokens"]
+            "completion_token_usage": new_api_function.usage["completion_tokens"]
             + authed_user.completion_token_usage,
         }
         update_user(session, authed_user_id, **token_usage)
@@ -531,7 +515,9 @@ def query_tool(request: QueryToolRequest, session_id: str = Cookie(None)):
     if not tool:
         return {"error": "Unable to query requested tool."}
 
-    e, response = api_env.query(tool.path, request.inputs)
+    # clean inputs:
+    converted_inputs = convert_types(request.inputs, tool.inputs)
+    e, response = api_env.query(tool.path, converted_inputs)
 
     if not e:
         return {"output": response.json()}
