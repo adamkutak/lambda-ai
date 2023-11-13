@@ -4,11 +4,13 @@
 #     test_case: in: 10, 5; out: 50
 #     pre-test: setup the database so there is 45 products in inventory column before the call and 40 products after.
 
+import ast
 import os
 from .gpt_management import openAIchat
 from .prompts import (
     ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
     ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
+    ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_3,
     SQL_GENERATION_PROMPT,
     SQL_ON_CREATE_ERROR,
 )
@@ -32,17 +34,16 @@ class SQLGenAgent:
             functions=[FUNCTION_CALLING_SQL_GENERATION],
         )
 
-        ai_chat.add_function_one_shot_prompt(
-            name="create_sql",
-            input_data=None,
-            output_data=ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
-        )
-
-        ai_chat.add_function_one_shot_prompt(
-            name="create_sql",
-            input_data=None,
-            output_data=ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
-        )
+        for one_shot in [
+            ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS,
+            ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2,
+            ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_3,
+        ]:
+            ai_chat.add_function_one_shot_prompt(
+                name="create_sql",
+                input_data=None,
+                output_data=one_shot,
+            )
 
         db_details = self.database.view_db_details()
 
@@ -56,6 +57,7 @@ class SQLGenAgent:
 
         while result_code > 0 and attempts < MAX_ATTEMPTS:
             result_code, data = self.process_and_test_response(ai_response)
+            print(f"sql gen result is: {result_code}: {data}")
             if result_code > 0:
                 message = SQL_ON_CREATE_ERROR.format(error=data)
                 ai_response = ai_chat.send_chat(
@@ -94,13 +96,6 @@ class SQLGenAgent:
                 return (
                     1,
                     f"error with pre sql query: {post_sql['sql']}, The error is: {e}",
-                )
-
-            if not ret_value:
-                os.remove(isolated_test_db)
-                return (
-                    1,
-                    f"error: post sql statement: {post_sql['sql']} did not return any comparison value to assert against.",
                 )
 
         os.remove(isolated_test_db)

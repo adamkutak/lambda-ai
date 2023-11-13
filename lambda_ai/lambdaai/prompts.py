@@ -175,21 +175,31 @@ ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS = {
     "post_sql": [
         {
             "sql": "SELECT quantity FROM inventory WHERE item_id=2",
-            "assert_value": "90",
+            "assert_value": "(90,)",
         }
     ],
 }
 
 ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_2 = {
     "pre_sql": [
-        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('Michael', true, 'mj@gmail.com', 1)",
-        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('James', false, 'coolj@hotmail.com', 2)",
-        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('Adam', true, 'doubleaagent@gmail.com', 3)",
+        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('Michael', True, 'mj@gmail.com', 1)",
+        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('James', False, 'coolj@hotmail.com', 2)",
+        "INSERT INTO customers (first_name, verified, email, customer_id) VALUES ('Adam', True, 'doubleaagent@gmail.com', 3)",
     ],
     "post_sql": [
         {
-            "sql": "SELECT COUNT(*) FROM customers WHERE verified = true",
-            "assert_value": "2",
+            "sql": "SELECT COUNT(*) FROM customers WHERE verified = True",
+            "assert_value": "(2,)",
+        }
+    ],
+}
+
+ONE_SHOT_SQL_GENERATION_FUNCTION_ARGS_3 = {
+    "pre_sql": [],
+    "post_sql": [
+        {
+            "sql": "SELECT name, price, in_stores FROM test_inventory WHERE item_id = 111",
+            "assert_value": "('beets', 2.25, 0)",
         }
     ],
 }
@@ -198,6 +208,7 @@ SQL_GENERATION_PROMPT = """
 Your goal is to translate natural language description of database operations into SQL code. 
 The SQL you generate must be valid SQL.
 Only create SQL statements that interact with the columns provided in the database description provided.
+Note that for any assert values, booleans should be 0s or 1s instead of False and True
 
 This is the natural language to translate to sql:
 {pre_sql}

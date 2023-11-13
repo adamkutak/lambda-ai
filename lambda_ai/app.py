@@ -57,7 +57,7 @@ from database.main import db_session
 from lambdaai.db import DB, DEFAULT_DB_PATH
 
 from lambdaai.environment import APIEnvironment, APIFile
-from lambdaai.utils import generate_slug, parse_bearer_token
+from lambdaai.utils import generate_slug, parse_bearer_token, convert_types
 
 
 # running on app startup.
@@ -120,6 +120,11 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
                 )
     else:
         attached_db = None
+
+    # sanitize datatypes:
+    for testcase in request.testcases:
+        testcase.input = convert_types(testcase.input, request.tool.inputs)
+        testcase.output = convert_types(testcase.output, request.tool.outputs)
 
     # create object in database (set api_function_created to empty)
     new_function = APIFunctionCreate(
@@ -510,7 +515,9 @@ def query_tool(request: QueryToolRequest, session_id: str = Cookie(None)):
     if not tool:
         return {"error": "Unable to query requested tool."}
 
-    e, response = api_env.query(tool.path, request.inputs)
+    # clean inputs:
+    converted_inputs = convert_types(request.inputs, tool.inputs)
+    e, response = api_env.query(tool.path, converted_inputs)
 
     if not e:
         return {"output": response.json()}

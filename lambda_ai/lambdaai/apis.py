@@ -65,7 +65,7 @@ class APIFunction:
         if not self.test_cases_aresql and self.attached_db:
             sql_gen_agent = SQLGenAgent(self.attached_db)
             for i in range(len(self.test_cases)):
-                if self.test_cases[i]["pre_sql"] and self.test_cases[i]["post_sql"]:
+                if self.test_cases[i]["pre_sql"] or self.test_cases[i]["post_sql"]:
                     result_code, data = sql_gen_agent.generate_sql(
                         pre_sql=self.test_cases[i]["pre_sql"],
                         post_sql=self.test_cases[i]["post_sql"],

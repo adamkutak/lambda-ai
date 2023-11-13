@@ -1,6 +1,7 @@
 import math
 import sqlite3
 import re
+from typing import Any, Dict
 
 SAFE_NAME_CHARACTERS = "/_"
 
@@ -98,3 +99,38 @@ def parse_bearer_token(token: str):
     parsed_token = token.split(" ")[-1]
 
     return parsed_token
+
+
+def convert_types(
+    data: Dict[str, Any], expected_types: Dict[str, str]
+) -> Dict[str, Any]:
+    converted = {}
+    for key, value in data.items():
+        expected_type = expected_types.get(key)
+
+        # Skip conversion if value is already of the expected type
+        if isinstance(value, get_type(expected_type)):
+            converted[key] = value
+        elif expected_type == "int":
+            converted[key] = int(value)
+        elif expected_type == "float":
+            converted[key] = float(value)
+        elif expected_type == "bool":
+            if isinstance(value, str):
+                converted[key] = value.lower() in ["true", "1", "yes"]
+            else:
+                converted[key] = bool(value)
+        else:  # default to string
+            converted[key] = str(value)
+    return converted
+
+
+def get_type(type_str: str):
+    if type_str == "int":
+        return int
+    elif type_str == "float":
+        return float
+    elif type_str == "bool":
+        return bool
+    else:
+        return str
