@@ -286,6 +286,7 @@ def create_tool(request: CreateToolRequest, session_id: str = Cookie(None)):
     new_api_function_return = {
         "id": api_obj_id,
         "name": new_api_function.name,
+        "path": new_api_function.path,
         "inputs": new_api_function.inputs,
         "outputs": new_api_function.outputs,
         "description": new_api_function.functionality,
@@ -391,6 +392,7 @@ def get_tools(session_id: str = Cookie(None)):
             {
                 "id": tool.id,
                 "name": tool.name,
+                "path": tool.path,
                 "inputs": tool.inputs,
                 "outputs": tool.outputs,
                 "description": tool.functionality,
