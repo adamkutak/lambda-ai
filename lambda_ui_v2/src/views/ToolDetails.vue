@@ -19,6 +19,11 @@
                 </div>
             </section>
             <button @click="runTool">Run</button>
+
+            <div class="path-container">
+                <input type="text" readonly :value="tool.path" class="path-input" />
+                <button @click="copyPathToClipboard" class="copy-button">Copy</button>
+            </div>
         </div>
     </div>
 </template>
@@ -112,6 +117,15 @@ export default {
             } catch (error) {
                 console.error("Error deleting tool:", error);
             }
+        },
+        copyPathToClipboard() {
+            const path = this.tool.path;
+            navigator.clipboard.writeText(path).then(() => {
+                console.log('Path copied to clipboard');
+                // Optionally, you can add a notification or a tooltip to inform the user that the path was copied.
+            }).catch(err => {
+                console.error('Failed to copy path:', err);
+            });
         }
     },
     watch: {
@@ -212,5 +226,34 @@ button:hover {
 
 .header-container {
     position: relative;
+}
+
+.path-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.path-input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.copy-button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+    background-color: #2980b9;
 }
 </style>
